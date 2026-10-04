@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directories:
+      - /src/GHJump
+      - /src/GHJump.Core
+      - /tests/GHJump.Core.Tests
+      - /tests/GHJump.Extension.Tests
+      - /tools/GHJump.LiveCheck
+    labels:
+      - 依存更新
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        # Command Palette SDKはホストとの互換性を確認して個別に更新する。
+        exclude-patterns:
+          - Microsoft.CommandPalette.Extensions
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    labels:
+      - 依存更新
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns:
+          - "*"

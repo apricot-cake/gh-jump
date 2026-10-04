@@ -41,5 +41,31 @@ try {
         $packedManifest.Package.Applications.Application.Extensions.Extension.AppExtension.Name -notcontains 'com.microsoft.commandpalette') {
         throw 'Package identity, executable or extension registration is invalid.'
     }
+    $requiredLicenses = @(
+        'LICENSE',
+        'licenses/THIRD-PARTY-NOTICES.md',
+        'licenses/CommandPalette-SDK-MIT.txt',
+        'licenses/CsWinRT-MIT.txt',
+        'licenses/WinRTServer-MIT.txt',
+        'licenses/ToolGood-Words-Pinyin-MIT.txt',
+        'licenses/Windows-SDK.rtf',
+        'licenses/NET-Runtime-MIT.txt',
+        'licenses/NET-Runtime-Third-Party-Notices.txt',
+        'licenses/Octicons-MIT.txt'
+    )
+    foreach ($required in $requiredLicenses) {
+        if (!(Test-Path -LiteralPath (Join-Path $root $required))) {
+            throw "Required license source is missing: $required"
+        }
+    }
+    $licenseSources = @((Get-Item (Join-Path $root 'LICENSE'))) + @(Get-ChildItem (Join-Path $root 'licenses') -Recurse -File)
+    foreach ($source in $licenseSources) {
+        $relative = [IO.Path]::GetRelativePath($root, $source.FullName)
+        $packed = Join-Path $unpack $relative
+        if (!(Test-Path -LiteralPath $packed) -or
+            (Get-FileHash -LiteralPath $source.FullName).Hash -ne (Get-FileHash -LiteralPath $packed).Hash) {
+            throw "Required license document is missing or changed in the package: $relative"
+        }
+    }
     Write-Host "Validated unsigned package: $package"
 } finally { Pop-Location }

@@ -96,6 +96,8 @@ Microsoft公式の拡張方式と標準ページを採用し、独自UIや認証
 
 検証スクリプトでビルド、unit test、整形・Analyzer、MSIXパッケージ検証を実行します。パッケージの出力先は `artifacts/packages` です。GitHub Actionsでも同じスクリプトを実行します。
 
+NuGetの取得元は `NuGet.Config` でnuget.orgに固定しています。CIはGitleaksによる秘密情報検査と、PRのDependency Reviewも実行します。NuGetとGitHub Actionsの更新はDependabotが週次で提案します。Command Palette SDKの更新はホストとの互換性を確認して取り込みます。
+
 実装はCommand Palette本体の `src/GHJump`、取得・キャッシュ・アクション・URLのロジックを扱う `src/GHJump.Core` に分けています。`tests/GHJump.Core.Tests` と `tests/GHJump.Extension.Tests` でロジックと公式Toolkitの検索を検証します。アクションを増やす場合はアクション定義へ項目を追加します。
 
 登録済み拡張の実データ取得とページ構成は、次のコマンドでも確認できます。
@@ -112,6 +114,10 @@ Microsoft公式の拡張方式と標準ページを採用し、独自UIや認証
 - 初回取得や更新では通信が必要です。キャッシュの内容は最新の権限を保証しません。
 - ブラウザーのGitHubログインとCLIのアカウントは別です。移動先のアクセスにはブラウザー側でも適切なログインが必要です。
 - MSIX検証と自動テストだけでは、Command Palette上の操作確認を代替できません。
+
+## ライセンス
+
+GH Jumpの独自コードは[MIT License](LICENSE)です。第三者ソフトウェアにはそれぞれのライセンスを適用します。[第三者通知](licenses/THIRD-PARTY-NOTICES.md)と各ライセンス原文はMSIXにも含め、パッケージ検証で同梱と内容の一致を確認します。
 
 ## Extension Galleryへの公開
 
