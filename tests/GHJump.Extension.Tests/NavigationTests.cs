@@ -80,13 +80,30 @@ public sealed class NavigationTests
     [InlineData("MICROSOFT/powertoys", "microsoft/PowerToys")]
     public void StandardToolkitSearchesRepositoryNameOwnerAndFullName(string query, string expected)
     {
-        IListItem[] repositories =
+        RepositoryListItem[] repositories =
         [
-            new ListItem(new NoOpCommand()) { Title = "octocat/hello-world", Subtitle = "Private" },
-            new ListItem(new NoOpCommand()) { Title = "microsoft/PowerToys", Subtitle = "Repository" },
-            new ListItem(new NoOpCommand()) { Title = "other/unrelated", Subtitle = "Fork" },
+            new(Repository),
+            new(new GitHubRepository(456, "microsoft", "PowerToys", false, false)),
+            new(new GitHubRepository(789, "other", "unrelated", false, true)),
         ];
-        Assert.Equal(expected, ListHelpers.FilterList(repositories, query).First().Title);
+        var first = RepositoriesPage.FilterRepositories(repositories, query).First();
+        Assert.Equal(expected, $"{first.Subtitle}/{first.Title}");
+    }
+
+    [Fact]
+    public void SameNamedRepositoriesKeepDistinctOwnersAndCommands()
+    {
+        RepositoryListItem[] repositories =
+        [
+            new(new GitHubRepository(1, "alice", "api", true, false)),
+            new(new GitHubRepository(2, "my-org", "api", false, false)),
+        ];
+        var matches = RepositoriesPage.FilterRepositories(repositories, "api");
+        Assert.Equal(2, matches.Length);
+        Assert.All(matches, item => Assert.Equal("api", item.Title));
+        Assert.Equal(["alice", "my-org"], matches.Select(item => item.Subtitle));
+        Assert.NotEqual(matches[0].Command.Id, matches[1].Command.Id);
+        Assert.Equal("my-org", RepositoriesPage.FilterRepositories(repositories, "my-org/api").First().Subtitle);
     }
 
     [Fact]

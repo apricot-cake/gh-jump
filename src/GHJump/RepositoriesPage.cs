@@ -4,13 +4,13 @@ using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace GHJump;
 
-internal sealed partial class RepositoriesPage : ListPage, IDisposable
+internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
 {
     private readonly GitHubRepositoryProvider _provider = new(new GitHubCli(), new RepositoryCache());
     private readonly CancellationTokenSource _lifetime = new();
     private readonly object _gate = new();
     private readonly RefreshCommand _refresh;
-    private IListItem[] _items = [];
+    private RepositoryListItem[] _items = [];
     private bool _loading;
     private bool _disposed;
     private DateTimeOffset _lastLoad;
@@ -29,7 +29,7 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
     public override IListItem[] GetItems()
     {
         bool load;
-        IListItem[] items;
+        RepositoryListItem[] items;
         lock (_gate)
         {
             load = !_disposed && !_loading && DateTimeOffset.UtcNow - _lastLoad > TimeSpan.FromMinutes(5);
@@ -43,8 +43,15 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
         }
 
         if (load) { BeginLoad(force: false); }
-        return items;
+        return FilterRepositories(items, SearchText);
     }
+
+    public override void UpdateSearchText(string oldSearch, string newSearch) => RaiseItemsChanged();
+
+    internal static IListItem[] FilterRepositories(IEnumerable<RepositoryListItem> items, string query) =>
+        ListHelpers.FilterList(items, query, (search, item) => Math.Max(
+            ListHelpers.ScoreListItem(search, item),
+            FuzzyStringMatcher.ScoreFuzzy(search, item.Repository.FullName))).Cast<IListItem>().ToArray();
 
     internal void Refresh()
     {
@@ -74,11 +81,8 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
         try
         {
             var repositories = await _provider.GetRepositoriesAsync(force, _lifetime.Token).ConfigureAwait(false);
-            var items = repositories.Select(repository => (IListItem)new ListItem(new ActionsPage(repository))
+            var items = repositories.Select(repository => new RepositoryListItem(repository)
             {
-                Title = repository.FullName,
-                Subtitle = repository.IsPrivate ? "Private" : repository.IsFork ? "Fork" : "Repository",
-                Icon = JumpIcons.Get("repo"),
                 MoreCommands = [new CommandContextItem(_refresh)],
             }).ToArray();
             lock (_gate)
@@ -116,13 +120,11 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
         finally
         {
             bool notify;
-            int count;
             lock (_gate)
             {
                 _loading = false;
                 _lastLoad = DateTimeOffset.UtcNow;
                 notify = !_disposed;
-                count = _items.Length;
                 if (_disposed)
                 {
                     _provider.Dispose();
@@ -135,7 +137,7 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
             if (notify)
             {
                 IsLoading = false;
-                RaiseItemsChanged(count);
+                RaiseItemsChanged();
             }
         }
     }

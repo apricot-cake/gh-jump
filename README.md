@@ -4,7 +4,7 @@ GitHubのリポジトリを選び、トップページ、Issues、Pull requests�
 
 ## 基本操作
 
-Command PaletteでGH Jumpを開き、リポジトリ名、owner名、`owner/repository`で絞り込みます。Enterでリポジトリを選ぶと、アクション一覧が表示されます。空入力のEnterはリポジトリトップを開きます。候補が一つになっても自動実行しません。
+Command PaletteでGH Jumpを開き、リポジトリ名、owner名、`owner/repository`で絞り込みます。一覧はリポジトリ名を主表示、ユーザー名・organization名をサブ表示にします。Enterでリポジトリを選ぶと、アクション一覧が表示されます。空入力のEnterはリポジトリトップを開きます。候補が一つになっても自動実行しません。
 
 呼び出し用の `gh` はCommand Paletteの標準エイリアス設定で登録します。リポジトリ名やアクション名の検索文字とは別の設定です。
 
@@ -121,6 +121,6 @@ Galleryは配布物を保管せず、StoreまたはWinGetのインストール�
 
 ## 検証状態
 
-Windows 11 / Command Palette 0.11.11762.0で、ビルド・Analyzer・整形、52件の自動テスト、MSIX作成・検証、COM経由の拡張起動・リポジトリ取得・ページ構成を確認しました。実アカウントの8件中5件のprivateリポジトリを取得できました。organization・fork・pagination・認証切れ・API失敗・キャッシュは自動テストで検証しています。実アカウントにはorganization・forkがないため、その実データ確認は未実施です。
+Windows 11 / Command Palette 0.11.11762.0で、ビルド・Analyzer・整形、53件の自動テスト、MSIX作成・検証、COM経由の拡張起動・リポジトリ取得・ページ構成を確認しました。実アカウントの8件中5件のprivateリポジトリを取得できました。organization・fork・pagination・認証切れ・API失敗・キャッシュは自動テストで検証しています。実アカウントにはorganization・forkがないため、その実データ確認は未実施です。
 
 公式Toolkitによる500件の検索は、200回の平均で約0.63msでした。Command Palette本体でのキー入力からブラウザーが開くまでの操作は未確認です。

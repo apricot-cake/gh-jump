@@ -31,7 +31,13 @@ if (args.Contains("--activate", StringComparer.Ordinal))
             items = await updated.Task.WaitAsync(TimeSpan.FromSeconds(30));
         }
 
-        var repositoryItem = items.Single(item => item.Title == "apricot-cake/gh-jump");
+        var repositoryItem = items.Single(item => item.Title == "gh-jump" && item.Subtitle == "apricot-cake");
+        var searchPage = (IDynamicListPage)page;
+        searchPage.SearchText = "apricot-cake/gh-jump";
+        if (page.GetItems().All(item => item.Title != "gh-jump" || item.Subtitle != "apricot-cake"))
+        {
+            throw new InvalidOperationException("Owner/repository search did not return the repository.");
+        }
         var actionsPage = (IListPage)repositoryItem.Command;
         var actions = actionsPage.GetItems();
         if (actions[0].Title != "Repository top" || actions.Length != 8)
