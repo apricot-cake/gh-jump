@@ -19,7 +19,7 @@ internal sealed partial class ActionsPage : ListPage
         _items = actions.Select(action => new ListItem(
             action.Id == "create"
                 ? new ActionsPage(repository, create: true)
-                : new OpenUrlCommand(RepositoryUrls.Build(repository, action.Path).AbsoluteUri))
+                : new OpenUrlCommand(RepositoryUrls.Build(repository, action.Path).AbsoluteUri) { Result = CommandResult.Dismiss() })
         {
             Title = action.Title,
             Icon = JumpIcons.Get(action.IconName),

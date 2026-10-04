@@ -19,7 +19,7 @@ Command PaletteでGH Jumpを開き、リポジトリ名、owner名、`owner/repo
 
 ## アクション
 
-アクションにはGitHub公式Octiconsを使用します。`Create`だけが子ページへ移動し、それ以外は既定ブラウザーでGitHubを開きます。
+アクションにはGitHub公式Octiconsを使用します。`Create`だけが子ページへ移動し、それ以外は既定ブラウザーでGitHubを開き、パレットを閉じます。
 
 | アクション | URLの末尾 | アイコン |
 | --- | --- | --- |
@@ -121,6 +121,6 @@ Galleryは配布物を保管せず、StoreまたはWinGetのインストール�
 
 ## 検証状態
 
-Windows 11 / Command Palette 0.11.11762.0で、ビルド・Analyzer・整形、51件の自動テスト、MSIX作成・検証、COM経由の拡張起動・リポジトリ取得・ページ構成を確認しました。実アカウントの8件中5件のprivateリポジトリを取得できました。organization・fork・pagination・認証切れ・API失敗・キャッシュは自動テストで検証しています。実アカウントにはorganization・forkがないため、その実データ確認は未実施です。
+Windows 11 / Command Palette 0.11.11762.0で、ビルド・Analyzer・整形、52件の自動テスト、MSIX作成・検証、COM経由の拡張起動・リポジトリ取得・ページ構成を確認しました。実アカウントの8件中5件のprivateリポジトリを取得できました。organization・fork・pagination・認証切れ・API失敗・キャッシュは自動テストで検証しています。実アカウントにはorganization・forkがないため、その実データ確認は未実施です。
 
 公式Toolkitによる500件の検索は、200回の平均で約0.63msでした。Command Palette本体でのキー入力からブラウザーが開くまでの操作は未確認です。

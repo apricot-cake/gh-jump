@@ -90,6 +90,15 @@ public sealed class NavigationTests
     }
 
     [Fact]
+    public void EveryUrlActionDismissesThePalette()
+    {
+        var pages = new[] { new ActionsPage(Repository), new ActionsPage(Repository, create: true) };
+        var commands = pages.SelectMany(page => page.GetItems()).Select(item => item.Command).OfType<OpenUrlCommand>().ToArray();
+        Assert.Equal(9, commands.Length);
+        Assert.All(commands, command => Assert.Equal(CommandResultKind.Dismiss, command.Result.Kind));
+    }
+
+    [Fact]
     public void EveryActionHasPackagedLightAndDarkPngIcons()
     {
         var pages = new[] { new ActionsPage(Repository), new ActionsPage(Repository, create: true) };
