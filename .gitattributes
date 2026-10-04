@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.png binary
 *.rtf binary
+# Preserve upstream license text, including line endings and final blank lines.
+/licenses/*.txt -text whitespace=-blank-at-eof,cr-at-eol
