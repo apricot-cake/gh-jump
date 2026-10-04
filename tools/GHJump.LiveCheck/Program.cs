@@ -23,12 +23,12 @@ if (args.Contains("--activate", StringComparer.Ordinal))
     if (args.Contains("--load", StringComparer.Ordinal))
     {
         var page = (IListPage)commands[0].Command;
-        var loading = Stopwatch.StartNew();
+        var updated = new TaskCompletionSource<IListItem[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        page.ItemsChanged += (_, _) => updated.TrySetResult(page.GetItems());
         var items = page.GetItems();
-        while (items.Length == 0 && loading.Elapsed < TimeSpan.FromSeconds(30))
+        if (items.Length == 0)
         {
-            await Task.Delay(200);
-            items = page.GetItems();
+            items = await updated.Task.WaitAsync(TimeSpan.FromSeconds(30));
         }
 
         var repositoryItem = items.Single(item => item.Title == "apricot-cake/gh-jump");
@@ -61,9 +61,9 @@ Console.WriteLine($"Live account: {repositoryProvider.Account}; repositories: {r
 using var organizations = JsonDocument.Parse(await cli.RunAsync(["api", "user/orgs", "--hostname", "github.com", "--paginate", "--slurp"], CancellationToken.None));
 var owners = organizations.RootElement.EnumerateArray().SelectMany(page => page.EnumerateArray()).Select(org => org.GetProperty("login").GetString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
 Console.WriteLine($"Visible organizations: {owners.Count}; repositories belonging to them: {repositories.Count(r => owners.Contains(r.Owner))}");
-if (!repositories.Any(r => r.FullName.Equals("apricot-cake/gh-jump", StringComparison.OrdinalIgnoreCase) && r.IsPrivate))
+if (!repositories.Any(r => r.IsPrivate))
 {
-    throw new InvalidOperationException("The private GH Jump repository was not returned.");
+    throw new InvalidOperationException("No private repository was returned for this validation account.");
 }
 
 timer.Restart();

@@ -28,32 +28,42 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
 
     public override IListItem[] GetItems()
     {
+        bool load;
+        IListItem[] items;
         lock (_gate)
         {
-            if (!_disposed && !_loading && DateTimeOffset.UtcNow - _lastLoad > TimeSpan.FromMinutes(5))
+            load = !_disposed && !_loading && DateTimeOffset.UtcNow - _lastLoad > TimeSpan.FromMinutes(5);
+            if (load)
             {
-                BeginLoad(force: false);
+                _loading = true;
+                _items = [];
             }
 
-            return _items;
+            items = _items;
         }
+
+        if (load) { BeginLoad(force: false); }
+        return items;
     }
 
     internal void Refresh()
     {
+        bool load;
         lock (_gate)
         {
-            if (!_disposed && !_loading)
+            load = !_disposed && !_loading;
+            if (load)
             {
-                BeginLoad(force: true);
+                _loading = true;
+                _items = [];
             }
         }
+
+        if (load) { BeginLoad(force: true); }
     }
 
     private void BeginLoad(bool force)
     {
-        _loading = true;
-        _items = [];
         IsLoading = true;
         EmptyContent = new CommandItem(new NoOpCommand()) { Title = "Loading repositories…", Subtitle = "GitHub CLI · github.com" };
         _ = LoadAsync(force);
@@ -79,9 +89,10 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
                 }
 
                 _items = items;
-                Title = $"GH Jump · {_provider.Account}";
-                EmptyContent = new CommandItem(_refresh) { Title = "No repositories", Subtitle = "Check your account, permissions and organization SSO; then refresh" };
             }
+
+            Title = $"GH Jump · {_provider.Account}";
+            EmptyContent = new CommandItem(_refresh) { Title = "No repositories", Subtitle = "Check your account, permissions and organization SSO; then refresh" };
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
@@ -97,26 +108,34 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
                 }
 
                 _items = [];
-                var message = exception is GitHubCliException known ? known.Message : "Repository loading failed. Refresh to try again.";
-                EmptyContent = new CommandItem(_refresh) { Title = "Could not load repositories", Subtitle = message };
             }
+
+            var message = exception is GitHubCliException known ? known.Message : "Repository loading failed. Refresh to try again.";
+            EmptyContent = new CommandItem(_refresh) { Title = "Could not load repositories", Subtitle = message };
         }
         finally
         {
+            bool notify;
+            int count;
             lock (_gate)
             {
                 _loading = false;
                 _lastLoad = DateTimeOffset.UtcNow;
-                if (!_disposed)
-                {
-                    IsLoading = false;
-                    RaiseItemsChanged();
-                }
-                else
+                notify = !_disposed;
+                count = _items.Length;
+                if (_disposed)
                 {
                     _provider.Dispose();
                     _lifetime.Dispose();
                 }
+            }
+
+            // The host can synchronously call GetItems from these COM callbacks.
+            // Never hold the list lock while notifying another process.
+            if (notify)
+            {
+                IsLoading = false;
+                RaiseItemsChanged(count);
             }
         }
     }
