@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GHJump.Core/GHJump.Core.csproj" />
+    <Project Path="src/GHJump/GHJump.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GHJump.Core.Tests/GHJump.Core.Tests.csproj" />
+    <Project Path="tests/GHJump.Extension.Tests/GHJump.Extension.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/GHJump.LiveCheck/GHJump.LiveCheck.csproj" />
+  </Folder>
+</Solution>

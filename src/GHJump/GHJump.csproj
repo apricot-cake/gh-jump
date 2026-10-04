@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <CsWinRTAotOptimizerEnabled>true</CsWinRTAotOptimizerEnabled>
+    <CsWinRTAotWarningLevel>2</CsWinRTAotWarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GHJump.Core/GHJump.Core.csproj" />
+    <PackageReference Include="Microsoft.CommandPalette.Extensions" Version="0.11.260520004" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageReference Include="Shmuelie.WinRTServer" Version="2.1.1" />
+    <Content Include="Assets/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Package.appxmanifest" />
+  </ItemGroup>
+</Project>

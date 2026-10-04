@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+TestResults/
+artifacts/
+*.user
+*.suo
+*.pfx
+*.cer
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.msixupload
+*.appxupload
