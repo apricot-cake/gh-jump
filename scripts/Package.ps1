@@ -28,7 +28,8 @@ try {
     $makeAppx = Get-ChildItem $kitBin -Filter makeappx.exe -Recurse |
         Where-Object { $_.Directory.Name -eq 'x64' } | Sort-Object FullName -Descending | Select-Object -First 1
     if (!$makeAppx) { throw 'Windows SDK MakeAppx.exe was not found.' }
-    $package = Join-Path $packages "GHJump_0.1.0.0_$Architecture.msix"
+    $packageVersion = $manifest.Package.Identity.Version
+    $package = Join-Path $packages "GHJump_${packageVersion}_$Architecture.msix"
     & $makeAppx.FullName pack /d $publish /p $package /o *> (Join-Path $packages "pack-$Architecture.log")
     if ($LASTEXITCODE -ne 0) { throw 'MSIX schema/package validation failed.' }
     $unpack = $validation
