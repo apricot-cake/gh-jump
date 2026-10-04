@@ -59,7 +59,7 @@ GH Jumpは `gh api` に取得を任せ、`gh auth token`でトークンを取り
 
 ## インストール
 
-現時点では開発用の非公開プロジェクトです。Store、WinGet、Extension Galleryには公開していません。
+ソースコードを公開しています。Store、WinGet、Extension Galleryには公開していません。
 
 Windows 11でPowerToysのCommand PaletteとGitHub CLIを有効にしてください。開発用の登録と配布用MSIXのインストールは異なります。開発用登録はWindowsの開発者モードを有効にして行います。配布用MSIXは信頼できる証明書の署名が必要です。CIが作る未署名パッケージを、そのまま一般利用者へ配布することはできません。
 
