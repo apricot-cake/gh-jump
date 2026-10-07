@@ -14,7 +14,7 @@ internal sealed partial class ActionsPage : ListPage
         Title = repository.FullName + (create ? " · Create" : string.Empty);
         Name = "Open";
         Icon = JumpIcons.Get(create ? "plus" : "repo");
-        PlaceholderText = create ? "Issue or Pull request" : "Issues, Pull requests, Actions, Create…";
+        PlaceholderText = create ? "Create issue or pull request" : "Issues, Pull requests, Actions, Create…";
         var actions = create ? RepositoryActions.Create : RepositoryActions.Main;
         _items = actions.Select(action => new ListItem(
             action.Id == "create"
