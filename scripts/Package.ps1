@@ -36,10 +36,13 @@ try {
     & $makeAppx.FullName unpack /p $package /d $unpack /o *> (Join-Path $packages "unpack-$Architecture.log")
     if ($LASTEXITCODE -ne 0) { throw 'MSIX round-trip validation failed.' }
     [xml]$packedManifest = Get-Content (Join-Path $unpack 'AppxManifest.xml') -Raw
-    if ($packedManifest.Package.Identity.Name -ne 'ApricotCake.GHJump' -or
+    if ($packedManifest.Package.Identity.Name -ne $manifest.Package.Identity.Name -or
+        $packedManifest.Package.Identity.Publisher -ne $manifest.Package.Identity.Publisher -or
+        $packedManifest.Package.Identity.Version -ne $manifest.Package.Identity.Version -or
+        $packedManifest.Package.Identity.ProcessorArchitecture -ne $Architecture -or
         !(Test-Path (Join-Path $unpack 'GHJump.exe')) -or
         $packedManifest.Package.Applications.Application.Extensions.Extension.AppExtension.Name -notcontains 'com.microsoft.commandpalette') {
-        throw 'Package identity, executable or extension registration is invalid.'
+        throw 'Package identity, version, architecture, executable or extension registration is invalid.'
     }
     $requiredLicenses = @(
         'LICENSE',
