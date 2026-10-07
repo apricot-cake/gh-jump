@@ -12,9 +12,21 @@ Command PaletteでGH Jumpを開き、リポジトリを検索してEnterで選�
 
 認証、操作例、アクション一覧、制限事項は[使い方](docs/使い方.md)を参照してください。
 
+リポジトリ一覧。一部のリポジトリ名を隠しています。
+
+![リポジトリ一覧](docs/images/repositories.png)
+
+リポジトリを選ぶと、アクション一覧を表示します。
+
+![アクション一覧](docs/images/actions.png)
+
+CreateからIssueまたはPull requestの作成画面を開きます。
+
+![Createのアクション一覧](docs/images/create.png)
+
 ## 環境構築からビルドまで
 
-[CONTRIBUTING.md](docs/CONTRIBUTING.md)を参照してください。技術スタックの比較と選定理由は[技術スタック](docs/技術スタック.md)、GitHubの運用設定は[リポジトリ設定](docs/リポジトリ設定.md)にまとめています。
+[CONTRIBUTING.md](docs/CONTRIBUTING.md)を参照してください。
 
 ## ライセンス
 
