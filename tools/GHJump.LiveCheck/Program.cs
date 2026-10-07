@@ -23,18 +23,14 @@ if (args.Contains("--activate", StringComparer.Ordinal))
     if (args.Contains("--load", StringComparer.Ordinal))
     {
         var page = (IListPage)commands[0].Command;
-        var updated = new TaskCompletionSource<IListItem[]>(TaskCreationOptions.RunContinuationsAsynchronously);
-        page.ItemsChanged += (_, _) => updated.TrySetResult(page.GetItems());
         var items = page.GetItems();
         if (items.Length == 0)
         {
-            items = await updated.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            throw new InvalidOperationException("The initial repository fetch returned no items.");
         }
 
-        var repositoryItem = items.Single(item => item.Title == "gh-jump" && item.Subtitle == "apricot-cake");
-        var searchPage = (IDynamicListPage)page;
-        searchPage.SearchText = "apricot-cake/gh-jump";
-        if (page.GetItems().All(item => item.Title != "gh-jump" || item.Subtitle != "apricot-cake"))
+        var repositoryItem = items.Single(item => item.Title == "gh-jump" && item.Subtitle == "apricot-cake/gh-jump");
+        if (ListHelpers.FilterList(items, "apricot-cake/gh-jump").All(item => item.Title != "gh-jump" || item.Subtitle != "apricot-cake/gh-jump"))
         {
             throw new InvalidOperationException("Owner/repository search did not return the repository.");
         }

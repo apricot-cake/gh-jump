@@ -18,6 +18,7 @@ public sealed class NavigationTests
         Assert.Equal("GH Jump", command.Title);
         var page = Assert.IsType<RepositoriesPage>(command.Command);
         Assert.Equal("gh-jump.repositories", page.Id);
+        Assert.False((object)page is IDynamicListPage);
     }
 
     [Fact]
@@ -86,8 +87,8 @@ public sealed class NavigationTests
             new(new GitHubRepository(456, "microsoft", "PowerToys", false, false)),
             new(new GitHubRepository(789, "other", "unrelated", false, true)),
         ];
-        var first = RepositoriesPage.FilterRepositories(repositories, query).First();
-        Assert.Equal(expected, $"{first.Subtitle}/{first.Title}");
+        var first = ListHelpers.FilterList(repositories, query).First();
+        Assert.Equal(expected, first.Subtitle);
     }
 
     [Fact]
@@ -98,12 +99,12 @@ public sealed class NavigationTests
             new(new GitHubRepository(1, "alice", "api", true, false)),
             new(new GitHubRepository(2, "my-org", "api", false, false)),
         ];
-        var matches = RepositoriesPage.FilterRepositories(repositories, "api");
+        var matches = ListHelpers.FilterList(repositories, "api").ToArray();
         Assert.Equal(2, matches.Length);
         Assert.All(matches, item => Assert.Equal("api", item.Title));
-        Assert.Equal(["alice", "my-org"], matches.Select(item => item.Subtitle));
+        Assert.Equal(["alice/api", "my-org/api"], matches.Select(item => item.Subtitle));
         Assert.NotEqual(matches[0].Command.Id, matches[1].Command.Id);
-        Assert.Equal("my-org", RepositoriesPage.FilterRepositories(repositories, "my-org/api").First().Subtitle);
+        Assert.Equal("my-org/api", ListHelpers.FilterList(repositories, "my-org/api").First().Subtitle);
     }
 
     [Fact]

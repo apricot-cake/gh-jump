@@ -4,9 +4,9 @@ using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace GHJump;
 
-internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
+internal sealed partial class RepositoriesPage : ListPage, IDisposable
 {
-    private readonly GitHubRepositoryProvider _provider = new(new GitHubCli(), new RepositoryCache());
+    private readonly GitHubRepositoryProvider _provider;
     private readonly CancellationTokenSource _lifetime = new();
     private readonly object _gate = new();
     private readonly RefreshCommand _refresh;
@@ -15,8 +15,13 @@ internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
     private bool _disposed;
     private DateTimeOffset _lastLoad;
 
-    internal RepositoriesPage()
+    internal RepositoriesPage() : this(new GitHubRepositoryProvider(new GitHubCli(), new RepositoryCache()))
     {
+    }
+
+    internal RepositoriesPage(GitHubRepositoryProvider provider)
+    {
+        _provider = provider;
         Id = "gh-jump.repositories";
         Title = "GH Jump";
         Name = "Open";
@@ -42,16 +47,15 @@ internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
             items = _items;
         }
 
-        if (load) { BeginLoad(force: false); }
-        return FilterRepositories(items, SearchText);
+        if (load)
+        {
+            // The host fetches on a worker before subscribing to ItemsChanged.
+            // Return the loaded snapshot instead of relying on an initial notification.
+            BeginLoad(force: false, notifyItemsChanged: false).GetAwaiter().GetResult();
+            lock (_gate) { items = _items; }
+        }
+        return items;
     }
-
-    public override void UpdateSearchText(string oldSearch, string newSearch) => RaiseItemsChanged();
-
-    internal static IListItem[] FilterRepositories(IEnumerable<RepositoryListItem> items, string query) =>
-        ListHelpers.FilterList(items, query, (search, item) => Math.Max(
-            ListHelpers.ScoreListItem(search, item),
-            FuzzyStringMatcher.ScoreFuzzy(search, item.Repository.FullName))).Cast<IListItem>().ToArray();
 
     internal void Refresh()
     {
@@ -66,17 +70,17 @@ internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
             }
         }
 
-        if (load) { BeginLoad(force: true); }
+        if (load) { _ = BeginLoad(force: true, notifyItemsChanged: true); }
     }
 
-    private void BeginLoad(bool force)
+    private Task BeginLoad(bool force, bool notifyItemsChanged)
     {
         IsLoading = true;
         EmptyContent = new CommandItem(new NoOpCommand()) { Title = "Loading repositories…", Subtitle = "GitHub CLI · github.com" };
-        _ = LoadAsync(force);
+        return LoadAsync(force, notifyItemsChanged);
     }
 
-    private async Task LoadAsync(bool force)
+    private async Task LoadAsync(bool force, bool notifyItemsChanged)
     {
         try
         {
@@ -137,7 +141,7 @@ internal sealed partial class RepositoriesPage : DynamicListPage, IDisposable
             if (notify)
             {
                 IsLoading = false;
-                RaiseItemsChanged();
+                if (notifyItemsChanged) { RaiseItemsChanged(); }
             }
         }
     }

@@ -11,7 +11,7 @@ internal sealed partial class RepositoryListItem : ListItem
     {
         Repository = repository;
         Title = repository.Name;
-        Subtitle = repository.Owner;
+        Subtitle = repository.FullName;
         Icon = JumpIcons.Get("repo");
     }
 }
