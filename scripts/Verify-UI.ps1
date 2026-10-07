@@ -17,6 +17,7 @@ $events = [System.Collections.Generic.List[object]]::new()
 $timer = [System.Diagnostics.Stopwatch]::StartNew()
 $script:step = 'Preflight'
 $browserAddressSelectors = @{}
+$script:repositorySelectionChecked = $false
 $startedAt = [DateTime]::UtcNow.ToString('o')
 $previousWorkflow = $env:WINAPP_UI_WORKFLOW_ID
 $env:WINAPP_UI_WORKFLOW_ID = [guid]::NewGuid().ToString()
@@ -127,6 +128,49 @@ function Assert-FirstItem([string]$Expected, [string]$Identity = '') {
     }
 }
 
+function Test-RepositorySelectionReset {
+    Write-Step 'Repository selection: find owner'
+    $ownerQuery = $Repository.Split('/')[0]
+    Set-PaletteQuery $ownerQuery
+    Wait-Item ($Repository.Split('/')[1])
+    $items = @(Get-Items)
+    if ($items.Count -lt 2) {
+        $results.Add(@{ Scenario = 'RepositorySelectionReset'; Skipped = $true; Reason = 'The owner search has fewer than two visible repositories.' })
+        Write-Host 'RepositorySelectionReset: skipped (fewer than two visible owner matches)'
+        return
+    }
+    Assert-FirstItem $items[0].name
+    Write-Step 'Repository selection: select second candidate'
+    Send-PaletteKey 'down'
+    $limit = [DateTime]::UtcNow.AddMilliseconds($TimeoutMilliseconds)
+    do {
+        $selection = Invoke-Winapp @('ui', 'get-property', $items[1].selector, '-a', $palette, '--property', 'IsSelected')
+        if ($selection.properties.IsSelected -eq 'True') { break }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $limit)
+    if ($selection.properties.IsSelected -ne 'True') { throw 'The second repository was not selected by the Down key.' }
+    $events.Add(@{ Step = $script:step; ElapsedMilliseconds = $timer.ElapsedMilliseconds; SecondItemSelected = $true })
+    Write-Step 'Repository selection: append slash and reset to first candidate'
+    # Append without clearing: both owner/repo matches remain, including the previously selected second item.
+    # Clearing first would reset the selection and hide the regression being tested.
+    Invoke-Winapp @('ui', 'send-keys', '/', '--verbatim', '--via', 'send-input', '--target', 'MainSearchBox', '-a', $palette) | Out-Null
+    Invoke-Winapp @('ui', 'wait-for', 'MainSearchBox', '-a', $palette, '--value', "$ownerQuery/", '--timeout', "$TimeoutMilliseconds") | Out-Null
+    $limit = [DateTime]::UtcNow.AddMilliseconds($TimeoutMilliseconds)
+    do {
+        $updatedItems = @(Get-Items)
+        if ($updatedItems.Count -gt 0 -and $updatedItems[0].name -eq $items[0].name) {
+            $selection = Invoke-Winapp @('ui', 'get-property', $updatedItems[0].selector, '-a', $palette, '--property', 'IsSelected')
+            if ($selection.properties.IsSelected -eq 'True') { break }
+        }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $limit)
+    Assert-FirstItem $items[0].name
+    Wait-PalettePage 'Search owner/repository'
+    Save-PaletteState -ExpectedItem $items[0].name -ExpectedQuery "$ownerQuery/"
+    $results.Add(@{ Scenario = 'RepositorySelectionReset'; Passed = $true; SecondItemSelectedBeforeTyping = $true; FirstItemSelectedAfterTyping = $true; StayedOnRepositoryPage = $true })
+    Write-Host 'RepositorySelectionReset: passed'
+}
+
 function Open-Repository {
     Write-Step 'Open palette'
     $front = Get-ForegroundWindow
@@ -139,7 +183,7 @@ function Open-Repository {
     # GH Jump pages have distinct placeholders; Escape returns to the root without executing a command.
     for ($back = 0; $back -lt 3; $back++) {
         $search = Invoke-Winapp @('ui', 'get-property', 'MainSearchBox', '-a', $palette, '--property', 'Name')
-        if ($search.properties.Name -notin @('Search owner/repository', 'Issues, Pull requests, Actions, Create…', 'Issue or Pull request')) { break }
+        if ($search.properties.Name -notin @('Search owner/repository', 'Issues, Pull requests, Actions, Create…', 'Create issue or pull request')) { break }
         Send-PaletteKey 'esc'
         Wait-PalettePage $search.properties.Name -Different
     }
@@ -149,13 +193,17 @@ function Open-Repository {
     Write-Step 'Enter GH Jump'
     Send-PaletteKey 'enter'
     Wait-PalettePage 'Search owner/repository'
+    if (-not $script:repositorySelectionChecked) {
+        Test-RepositorySelectionReset
+        $script:repositorySelectionChecked = $true
+    }
     Write-Step 'Find repository'
     Set-PaletteQuery $Repository
     Assert-FirstItem ($Repository.Split('/')[1])
     # The single repository remains a list item until Enter, rather than auto-navigating.
     $repositoryItem = @(Get-Items)[0]
-    $owner = Invoke-Winapp @('ui', 'search', $Repository.Split('/')[0], '-a', $palette, '--type', 'Text', '--root', $repositoryItem.selector)
-    if (-not ($owner.matches | Where-Object { $_.name -eq $Repository.Split('/')[0] })) { throw 'Repository owner subtitle is missing.' }
+    $owner = Invoke-Winapp @('ui', 'search', $Repository, '-a', $palette, '--type', 'Text', '--root', $repositoryItem.selector)
+    if (-not ($owner.matches | Where-Object { $_.name -eq $Repository })) { throw 'Repository owner/repo subtitle is missing.' }
     Write-Step 'Enter repository'
     Send-PaletteKey 'enter'
     Wait-PalettePage 'Issues, Pull requests, Actions, Create…'
@@ -241,7 +289,7 @@ try {
             Set-PaletteQuery 'c'
             Assert-FirstItem 'Create'
             Send-PaletteKey 'enter'
-            Wait-PalettePage 'Issue or Pull request'
+            Wait-PalettePage 'Create issue or pull request'
             Wait-Item 'Issue'
             Wait-Item 'Pull request'
             $childItems = @(Get-Items)
