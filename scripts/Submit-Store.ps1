@@ -1,10 +1,12 @@
 param(
-    [ValidateSet('verify', 'submit')][string]$Mode = 'verify'
+    [ValidateSet('verify', 'submit', 'listing-verify', 'listing-submit')][string]$Mode = 'verify',
+    [string]$ListingPath = 'store/listings.json'
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $productId = '9NN7GSPR8W9R'
 $root = Split-Path $PSScriptRoot -Parent
+. (Join-Path $PSScriptRoot 'Store-Listing.ps1')
 
 # CLIの生出力には署名付きアップロードURLが含まれ得るため、ログへ流さない。
 function Invoke-StoreCli {
@@ -39,6 +41,13 @@ foreach ($name in @('MSSTORE_TENANT_ID', 'MSSTORE_CLIENT_ID', 'MSSTORE_SELLER_ID
     }
 }
 
+$listingInput = $null
+$resolvedListingPath = $null
+if ($Mode -like 'listing-*') {
+    $resolvedListingPath = if ([IO.Path]::IsPathRooted($ListingPath)) { $ListingPath } else { Join-Path $root $ListingPath }
+    $listingInput = Read-StoreListingInput -Path $resolvedListingPath
+}
+
 try {
     $tokenUrl = $env:ACTIONS_ID_TOKEN_REQUEST_URL + '&audience=api%3A%2F%2FAzureADTokenExchange'
     try {
@@ -49,6 +58,10 @@ try {
         if ([string]::IsNullOrWhiteSpace($env:MSSTORE_CLIENT_ASSERTION)) { throw 'Missing OIDC token.' }
     } catch { throw 'Could not obtain the GitHub OIDC token. Request details were withheld.' }
     Write-Output "::add-mask::$env:MSSTORE_CLIENT_ASSERTION"
+    if ($Mode -like 'listing-*') {
+        Invoke-StoreListingUpdate -Listings $listingInput -ResolvedListingPath $resolvedListingPath -Mode $Mode -ProductId $productId
+        return
+    }
     $null = Invoke-StoreCli -Arguments @('reconfigure', '--tenantId', $env:MSSTORE_TENANT_ID,
         '--clientId', $env:MSSTORE_CLIENT_ID, '--sellerId', $env:MSSTORE_SELLER_ID, '--clientAssertion')
     $application = Invoke-StoreCli -Arguments @('apps', 'get', $productId) | ConvertFrom-Json
@@ -84,5 +97,6 @@ try {
     $null = Invoke-StoreCli -Arguments @('submission', 'status', $productId)
     Write-Host 'Submission status read succeeded. Certification and publication are separate from this workflow.'
 } finally {
+    $script:storeAccessToken = $null
     Remove-Item Env:MSSTORE_CLIENT_ASSERTION -ErrorAction SilentlyContinue
 }

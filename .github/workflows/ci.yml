@@ -59,6 +59,9 @@ jobs:
       - name: Verify
         shell: pwsh
         run: ./scripts/Verify.ps1 -Configuration Release -Architecture x64
+      - name: Validate Store listing data and update logic
+        shell: pwsh
+        run: ./scripts/Test-StoreListing.ps1
       - name: Build and validate x64 and ARM64 bundle
         shell: pwsh
         run: ./scripts/Package-Bundle.ps1 -Configuration Release

@@ -100,15 +100,36 @@ Storeは審査通過後にMSIXへ署名します。Store提出のために配布
 
 ### GitHub Actionsからの提出
 
-Actionsの`Microsoft Store` workflowを`main`から手動実行します。既定の`verify`はAPI認証と提出状態の読み取りだけを行います。`submit`は検証済みのx64・ARM64 bundleをアップロードし、審査へ提出します。Storeの審査完了や公開完了をworkflowの成功とはみなしません。
+Actionsの`Microsoft Store` workflowを`main`から手動実行します。モードは次のとおりです。Storeの審査完了や公開完了をworkflowの成功とはみなしません。
 
-どちらのモードでもビルド、テスト、整形・Analyzer、bundle検証を先に実行します。その後、`microsoft-store` Environmentの承認を受けてから認証します。Environmentは`main`だけを許可し、必要なレビュアーを設定し、管理者による保護ルールの回避を無効にしてください。
+| モード | 操作 |
+| --- | --- |
+| `verify`（既定） | API認証と提出状態の読み取り |
+| `submit` | 検証済みのx64・ARM64 bundleを審査へ提出 |
+| `listing-verify` | 公開済み掲載データにローカルの変更を適用できるか、書き込みなしで確認 |
+| `listing-submit` | 掲載文・画像を更新して審査へ提出。パッケージは公開済みのものを維持 |
+
+すべてのモードでビルド、テスト、整形・Analyzer、bundle・掲載データの検証を先に実行します。その後、`microsoft-store` Environmentの承認を受けてから認証します。Environmentは`main`だけを許可し、必要なレビュアーを設定し、管理者による保護ルールの回避を無効にしてください。
 
 EnvironmentのVariablesには`MSSTORE_TENANT_ID`、`MSSTORE_CLIENT_ID`、`MSSTORE_SELLER_ID`を設定します。Partner Centerに関連付けたEntraの提出用アプリへ`Manager(Windows)`を付与し、GitHub OIDCのissuer `https://token.actions.githubusercontent.com`、audience `api://AzureADTokenExchange`と、このリポジトリのEnvironmentを表す実際のsubjectを登録します。GitHubのimmutable subjectを有効にしたリポジトリでは、ownerとrepositoryの固定IDを含むsubjectを使用します。[GitHubのOIDC設定](https://docs.github.com/en/actions/reference/security/oidc)、[Store APIの認証要件](https://learn.microsoft.com/en-us/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services)
 
-認証にはMicrosoft公式Store Developer CLIのclient assertionを使用します。長期有効なclient secretは保存せず、承認済みジョブのOIDCトークンをそのステップ内でのみ使用します。CLIの生出力は、署名付きアップロードURLを含む可能性があるため公開ログやartifactへ保存しません。[公式CLI](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/commands)
+パッケージ更新にはMicrosoft公式Store Developer CLI、掲載更新には公式REST APIを使用します。掲載更新はAPIの返却項目を保持し、CLIの内部モデルが扱わない画像の説明なども引き継ぎます。長期有効なclient secretは保存せず、承認済みジョブのOIDCトークンをそのステップ内でのみ使用します。CLIの生出力やAPIの認証情報・署名付きアップロードURLは、公開ログやartifactへ保存しません。[公式CLI](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/commands)
 
-`submit`は未完了の提出がある場合、既存の下書きを上書きせず停止します。新しいbundleのバージョンは公開済みの全パッケージより大きくしてください。掲載文や画像は公開済み提出から引き継ぎます。画像や説明の変更は、このパッケージ更新workflowとは別に行います。
+`submit`と`listing-submit`は未完了の提出がある場合、既存の下書きを上書きせず停止します。`submit`では新しいbundleのバージョンを公開済みの全パッケージより大きくしてください。掲載文や画像は公開済み提出から引き継ぎます。
+
+### 掲載文と画像を更新する
+
+[store/listings.json](../store/listings.json)に言語ごとの変更を記述し、画像は`store/images`へ置きます。入力はStore APIのフィールド名を使用します。`description`、`features`、`releaseNotes`、`keywords`、`title`、`licenseTerms`、`copyrightAndTrademarkInfo`を変更できます。省略したフィールド・言語・公開済みパッケージはそのまま引き継ぎます。空文字や空配列は、そのフィールドを空にする指定です。
+
+`images`には`fileName`（listings.jsonからの相対パス）、`description`、`imageType`を指定します。現在はデスクトップの`Screenshot`に対応しています。既存スクリーンショットを置き換え、ロゴなど他の種類の画像は維持します。PNGを使用し、横向きは1366×768以上、縦向きは768×1366以上にしてください。1言語につき10枚まで、1枚50MBまで、説明は200文字までです。パスは`store`内に限定します。画像を変更しない場合は`images`を省略します。言語の新規追加はPartner Centerで先に行ってください。[スクリーンショットの要件](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images)
+
+```powershell
+./scripts/Test-StoreListing.ps1
+```
+
+変更をcommit・pushし、`listing-verify`で公開済み掲載情報との組み合わせを確認します。その後、`listing-submit`を実行してEnvironmentの承認を通します。画像はZIPにまとめ、APIが発行したアップロード先へ送信します。アップロード失敗時は審査への提出を行いません。
+
+APIで作成した下書きをPartner Centerで編集すると、APIから更新・提出できなくなる場合があります。同じ下書きはAPIだけで管理してください。失敗時は提出状態を確認し、残った下書きを意図せず上書きしないようにします。プライバシーポリシー・サポート先・WebサイトURLは、このAPIの掲載フィールドでは更新できないためPartner CenterのPropertiesで変更します。[Microsoft Store submission API](https://learn.microsoft.com/en-us/windows/uwp/monetize/manage-app-submissions)
 
 ### 掲載内容と審査
 

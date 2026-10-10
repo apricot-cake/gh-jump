@@ -4,13 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: verifyは認証と状態確認のみ、submitはパッケージ更新を審査へ提出
+        description: verifyは接続確認、submitはパッケージ提出、listing-verifyは掲載内容の確認、listing-submitは掲載更新の提出
         type: choice
         required: true
         default: verify
         options:
           - verify
           - submit
+          - listing-verify
+          - listing-submit
 
 permissions:
   contents: read
@@ -35,6 +37,9 @@ jobs:
       - name: ビルド・テスト・整形・Analyzer
         shell: pwsh
         run: ./scripts/Verify.ps1 -Configuration Release -Architecture x64
+      - name: Store掲載データと更新処理の検証
+        shell: pwsh
+        run: ./scripts/Test-StoreListing.ps1
       - name: x64・ARM64 bundleの検証
         shell: pwsh
         run: ./scripts/Package-Bundle.ps1 -Configuration Release
