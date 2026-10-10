@@ -56,7 +56,7 @@ winget install --id Microsoft.WinAppCli --exact --source winget
 
 ## 開発用に登録する
 
-ソースコードを公開しています。Store、WinGet、Extension Galleryには公開していません。
+ソースコードと[Microsoft Store版](https://apps.microsoft.com/detail/9NN7GSPR8W9R)を公開しています。WinGet、Extension Galleryには未公開です。
 
 Windows 11でPowerToysのCommand PaletteとGitHub CLIを有効にしてください。開発用の登録と配布用MSIXのインストールは異なります。開発用登録はWindowsの開発者モードを有効にして行います。配布用MSIXは信頼できる証明書の署名が必要です。CIが作る未署名パッケージを、そのまま一般利用者へ配布することはできません。
 
@@ -97,6 +97,18 @@ Store用のバージョンは4区切りとし、末尾を`0`にします。先�
 出力先は`artifacts/packages/GHJump_<Version>_Bundle.msixbundle`です。Windows SDKのMakeAppxで構造と展開後の内容を検証します。GitHub Actionsでもbundleを検証します。Storeへ提出するbundleは、割り当てられたidentityとStore用バージョンをmanifestへ反映した後に作成します。提出前に各アーキテクチャの実機でインストール・起動・操作を確認してください。
 
 Storeは審査通過後にMSIXへ署名します。Store提出のために配布用証明書を購入したり、このリポジトリへ署名鍵を保存したりする必要はありません。Store以外から一般配布するMSIXには、別途信頼できる署名が必要です。[Microsoft Storeの署名](https://learn.microsoft.com/en-us/windows/apps/publish/faq/get-started-with-the-microsoft-store)
+
+### GitHub Actionsからの提出
+
+Actionsの`Microsoft Store` workflowを`main`から手動実行します。既定の`verify`はAPI認証と提出状態の読み取りだけを行います。`submit`は検証済みのx64・ARM64 bundleをアップロードし、審査へ提出します。Storeの審査完了や公開完了をworkflowの成功とはみなしません。
+
+どちらのモードでもビルド、テスト、整形・Analyzer、bundle検証を先に実行します。その後、`microsoft-store` Environmentの承認を受けてから認証します。Environmentは`main`だけを許可し、必要なレビュアーを設定し、管理者による保護ルールの回避を無効にしてください。
+
+EnvironmentのVariablesには`MSSTORE_TENANT_ID`、`MSSTORE_CLIENT_ID`、`MSSTORE_SELLER_ID`を設定します。Partner Centerに関連付けたEntraの提出用アプリへ`Manager(Windows)`を付与し、GitHub OIDCのissuer `https://token.actions.githubusercontent.com`、audience `api://AzureADTokenExchange`と、このリポジトリのEnvironmentを表す実際のsubjectを登録します。GitHubのimmutable subjectを有効にしたリポジトリでは、ownerとrepositoryの固定IDを含むsubjectを使用します。[GitHubのOIDC設定](https://docs.github.com/en/actions/reference/security/oidc)、[Store APIの認証要件](https://learn.microsoft.com/en-us/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services)
+
+認証にはMicrosoft公式Store Developer CLIのclient assertionを使用します。長期有効なclient secretは保存せず、承認済みジョブのOIDCトークンをそのステップ内でのみ使用します。CLIの生出力は、署名付きアップロードURLを含む可能性があるため公開ログやartifactへ保存しません。[公式CLI](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/commands)
+
+`submit`は未完了の提出がある場合、既存の下書きを上書きせず停止します。新しいbundleのバージョンは公開済みの全パッケージより大きくしてください。掲載文や画像は公開済み提出から引き継ぎます。画像や説明の変更は、このパッケージ更新workflowとは別に行います。
 
 ### 掲載内容と審査
 
