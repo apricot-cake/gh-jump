@@ -6,9 +6,9 @@ GitHubのリポジトリを選び、トップページ、Issues、Pull requests�
 
 Windows 11、PowerToysのCommand Palette、GitHub CLIが必要です。
 
-Microsoft Storeへ初回申請を提出し、現在は審査中です。公開後は[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)からインストールできます。WinGet、Extension Galleryには未公開です。
+[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)からインストールできます。WinGet、Extension Galleryには未公開です。
 
-審査中は、ソースからビルドし、[開発用に登録](docs/CONTRIBUTING.md#開発用に登録する)して使用します。
+ソースからビルドして使用する場合は、[開発用に登録](docs/CONTRIBUTING.md#開発用に登録する)してください。
 
 ## 使い方
 
