@@ -1,14 +1,16 @@
 param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
-    [ValidateSet('x64', 'arm64')][string]$Architecture = 'x64'
+    [ValidateSet('x64', 'arm64')][string]$Architecture = 'x64',
+    [string]$ArtifactDirectory = 'artifacts'
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
 try {
-    $publish = Join-Path $root "artifacts/publish/$Architecture"
-    $packages = Join-Path $root 'artifacts/packages'
-    $validation = Join-Path $root "artifacts/validation/$Architecture"
+    $output = Join-Path $root $ArtifactDirectory
+    $publish = Join-Path $output "publish/$Architecture"
+    $packages = Join-Path $output 'packages'
+    $validation = Join-Path $output "validation/$Architecture"
     $artifactsRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts')) + [IO.Path]::DirectorySeparatorChar
     foreach ($target in @($publish, $validation)) {
         $resolved = [IO.Path]::GetFullPath($target)

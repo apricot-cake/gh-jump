@@ -1,4 +1,7 @@
-param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release')
+param(
+    [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
+    [string]$ArtifactDirectory = 'artifacts'
+)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Push-Location $root
@@ -7,9 +10,10 @@ try {
     $identity = $sourceManifest.Package.Identity
     $version = $identity.Version
     foreach ($architecture in @('x64', 'arm64')) {
-        & "$PSScriptRoot/Package.ps1" -Configuration $Configuration -Architecture $architecture
+        & "$PSScriptRoot/Package.ps1" -Configuration $Configuration -Architecture $architecture -ArtifactDirectory $ArtifactDirectory
     }
-    $packages = Join-Path $root 'artifacts/packages'
+    $output = Join-Path $root $ArtifactDirectory
+    $packages = Join-Path $output 'packages'
     $mapping = Join-Path $packages 'bundle-mapping.txt'
     $lines = @('[Files]')
     foreach ($architecture in @('x64', 'arm64')) {
@@ -25,7 +29,7 @@ try {
     $bundle = Join-Path $packages "GHJump_${version}_Bundle.msixbundle"
     & $makeAppx.FullName bundle /f $mapping /p $bundle /bv $version /o *> (Join-Path $packages 'bundle.log')
     if ($LASTEXITCODE -ne 0) { throw 'MSIX bundle validation failed.' }
-    $unpack = Join-Path $root 'artifacts/validation/bundle'
+    $unpack = Join-Path $output 'validation/bundle'
     $artifactsRoot = [IO.Path]::GetFullPath((Join-Path $root 'artifacts')) + [IO.Path]::DirectorySeparatorChar
     $resolved = [IO.Path]::GetFullPath($unpack)
     if (!$resolved.StartsWith($artifactsRoot, [StringComparison]::OrdinalIgnoreCase)) {
