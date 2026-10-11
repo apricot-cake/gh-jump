@@ -14,12 +14,12 @@ if (args.Contains("--activate", StringComparer.Ordinal))
     Marshal.Release(pointer);
     var provider = (ICommandProvider)extension.GetProvider(ProviderType.Commands)!;
     var commands = provider.TopLevelCommands();
-    if (commands.Length != 1 || commands[0].Title != "GH Jump")
+    if (commands.Length != 1 || commands[0].Title != "gh jump")
     {
         throw new InvalidOperationException("The registered COM extension returned invalid commands.");
     }
 
-    Console.WriteLine("Packaged COM activation: passed; GH Jump command received.");
+    Console.WriteLine("Packaged COM activation: passed; gh jump command received.");
     if (args.Contains("--load", StringComparer.Ordinal))
     {
         var page = (IListPage)commands[0].Command;

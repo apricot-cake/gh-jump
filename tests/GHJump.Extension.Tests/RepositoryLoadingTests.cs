@@ -22,7 +22,7 @@ public sealed class RepositoryLoadingTests
 
         Assert.Equal("octocat/hello-world", Assert.Single(items).Subtitle);
         Assert.False(page.IsLoading);
-        Assert.Equal("GH Jump · octocat", page.Title);
+        Assert.Equal("gh jump · octocat", page.Title);
         Assert.Single(page.GetItems());
     }
 

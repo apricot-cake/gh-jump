@@ -1,8 +1,8 @@
 {
   "ja-jp": {
-    "title": "GH Jump",
+    "title": "gh jump",
     "shortDescription": "PowerToysのCommand PaletteからGitHubのリポジトリを検索し、目的のページをキーボードで開けます。GitHub CLIの既存のログインを使用します。",
-    "description": "PowerToysのCommand Paletteから、GitHubのリポジトリへすばやく移動できます。\n\nGitHub CLIでアクセスできるリポジトリを、リポジトリ名、ユーザー・組織名、owner/repositoryで検索できます。取得した一覧をローカルで絞り込むため、キーを入力するたびにGitHub APIへ問い合わせることはありません。\n\nEnterでリポジトリを選び、何も入力せずにもう一度Enterを押すと、リポジトリのトップページを開きます。Issues、Pull requests、Actions、Releases、Security、Settingsへも移動できます。CreateからIssueの作成画面やPull requestの比較画面を開けます。候補が1件になっても自動確定せず、必ずEnterで選択します。\n\nWindows 11、Command Paletteを有効にしたMicrosoft PowerToys、ログイン済みのGitHub CLIが必要です。GitHub.comに対応し、private・organization・forkのリポジトリも、ログインしたアカウントに権限がある場合に表示します。開いたページでは、ブラウザー側のGitHubログインを使用します。\n\n拡張本体のアクション名などは英語です。GH Jumpは独立したオープンソースの拡張機能で、GitHubやMicrosoftの公式製品ではありません。",
+    "description": "PowerToysのCommand Paletteから、GitHubのリポジトリへすばやく移動できます。\n\nGitHub CLIでアクセスできるリポジトリを、リポジトリ名、ユーザー・組織名、owner/repositoryで検索できます。取得した一覧をローカルで絞り込むため、キーを入力するたびにGitHub APIへ問い合わせることはありません。\n\nEnterでリポジトリを選び、何も入力せずにもう一度Enterを押すと、リポジトリのトップページを開きます。Issues、Pull requests、Actions、Releases、Security、Settingsへも移動できます。CreateからIssueの作成画面やPull requestの比較画面を開けます。候補が1件になっても自動確定せず、必ずEnterで選択します。\n\nWindows 11、Command Paletteを有効にしたMicrosoft PowerToys、ログイン済みのGitHub CLIが必要です。GitHub.comに対応し、private・organization・forkのリポジトリも、ログインしたアカウントに権限がある場合に表示します。開いたページでは、ブラウザー側のGitHubログインを使用します。\n\n拡張本体のアクション名などは英語です。gh jumpは独立したオープンソースの拡張機能で、GitHubやMicrosoftの公式製品ではありません。",
     "features": [
       "取得済みのリポジトリ一覧をローカルで高速検索",
       "リポジトリ名・ユーザー名・組織名・owner/repositoryで絞り込み",
@@ -26,5 +26,9 @@
         "imageType": "Screenshot"
       }
     ]
+  },
+  "en-us": {
+    "title": "gh jump",
+    "description": "gh jump integrates with the Windows Command Palette to help you find GitHub repositories and open their pages using your keyboard. Search by repository name, owner, or owner/repository. Open the repository home page, Issues, Pull requests, Actions, Releases, Security, or Settings, and jump to the screens for creating an issue or pull request. Requires Windows 11, PowerToys with Command Palette enabled, and GitHub CLI signed in to GitHub.com. Private, organization, and fork repositories are included when your GitHub CLI account has access. Browser access uses the GitHub account signed in to your browser. gh jump does not create issues or pull requests automatically."
   }
 }

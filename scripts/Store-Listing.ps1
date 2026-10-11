@@ -81,10 +81,28 @@ function Read-StoreListingInput {
     return $listings
 }
 
+function Read-StorePackageInput {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][version]$Version)
+    if ($Version.Major -lt 1 -or $Version.Revision -ne 0) { throw 'Invalid Store package version.' }
+    if (!(Test-Path -LiteralPath $Path -PathType Leaf)) { throw 'Validated MSIXbundle was not found.' }
+    if ([IO.Path]::GetFileName($Path) -cne "GHJump_${Version}_Bundle.msixbundle") { throw 'The bundle file name does not match the manifest version.' }
+    $archive = [IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $entry = $archive.GetEntry('AppxMetadata/AppxBundleManifest.xml')
+        if ($null -eq $entry) { throw 'The bundle manifest was not found.' }
+        $reader = [IO.StreamReader]::new($entry.Open())
+        try { [xml]$manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        if ($manifest.Bundle.Identity.Name -cne 'apricot-cake.GHJump' -or
+            [version]$manifest.Bundle.Identity.Version -ne $Version) { throw 'The bundle identity or version does not match the application manifest.' }
+    } finally { $archive.Dispose() }
+    return @{ SourcePath = [IO.Path]::GetFullPath($Path); ArchivePath = [IO.Path]::GetFileName($Path); Version = $Version.ToString() }
+}
+
 function New-StoreListingPlan {
     param([Parameter(Mandatory)][Collections.IDictionary]$Published,
         [Parameter(Mandatory)][Collections.IDictionary]$Listings,
-        [Parameter(Mandatory)][string]$RootDirectory)
+        [Parameter(Mandatory)][string]$RootDirectory,
+        [Collections.IDictionary]$Package)
     $submission = $Published | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
     $listingsKey = Get-StoreFieldKey -Object $submission -Name 'listings'
     if (!$listingsKey -or $submission[$listingsKey] -isnot [Collections.IDictionary]) { throw 'The Store response did not contain listings.' }
@@ -137,7 +155,28 @@ function New-StoreListingPlan {
             $destination[$imagesKey] = $images.ToArray()
         }
     }
-    return @{ Submission = $submission; Assets = $assets.ToArray(); Locales = @($Listings.Keys); ImageCount = $assets.Count }
+    $imageCount = $assets.Count
+    if ($null -ne $Package) {
+        $packagesKey = Get-StoreFieldKey -Object $submission -Name 'applicationPackages'
+        if (!$packagesKey -or @($submission[$packagesKey]).Count -eq 0) { throw 'No published package version was returned.' }
+        $packages = [Collections.Generic.List[object]]::new()
+        foreach ($existingPackage in $submission[$packagesKey]) {
+            $versionKey = Get-StoreFieldKey -Object $existingPackage -Name 'version'
+            if (!$versionKey -or [string]::IsNullOrWhiteSpace($existingPackage[$versionKey]) -or
+                [version]$Package.Version -le [version]$existingPackage[$versionKey]) {
+                throw 'The bundle version must be greater than every published package version.'
+            }
+            $statusKey = Get-StoreFieldKey -Object $existingPackage -Name 'fileStatus'
+            if (!$statusKey) { $statusKey = 'fileStatus' }
+            $existingPackage[$statusKey] = 'PendingDelete'
+            $packages.Add($existingPackage)
+        }
+        # 新しいパッケージの詳細はStoreが読み取る。PUTには公式の必須フィールドだけを渡す。
+        $packages.Add(@{ fileName = $Package.ArchivePath; fileStatus = 'PendingUpload'; minimumDirectXVersion = 'None'; minimumSystemRam = 'None' })
+        $submission[$packagesKey] = $packages.ToArray()
+        $assets.Add($Package)
+    }
+    return @{ Submission = $submission; Assets = $assets.ToArray(); Locales = @($Listings.Keys); ImageCount = $imageCount; PackageIncluded = ($null -ne $Package) }
 }
 
 function New-StoreImageArchive {
@@ -148,19 +187,19 @@ function New-StoreImageArchive {
             $null = [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $asset.SourcePath, $asset.ArchivePath, [IO.Compression.CompressionLevel]::Optimal)
         }
     } finally { $archive.Dispose() }
-    if ((Get-Item -LiteralPath $Path).Length -gt 256MB) { throw 'Store image archive exceeds the supported 256 MB single-upload limit.' }
+    if ((Get-Item -LiteralPath $Path).Length -gt 256MB) { throw 'Store upload archive exceeds the supported 256 MB single-upload limit.' }
 }
 
 function Send-StoreImageArchive {
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$UploadUrl)
     $uri = [uri]$UploadUrl
     if ($uri.Scheme -ne 'https' -or $uri.Host -notmatch '^[a-z0-9-]+\.blob\.core\.windows\.net$' -or [string]::IsNullOrEmpty($uri.Query)) { throw 'Store returned an unexpected upload destination.' }
-    if ((Get-Item -LiteralPath $Path).Length -gt 256MB) { throw 'Store image archive exceeds the supported 256 MB single-upload limit.' }
+    if ((Get-Item -LiteralPath $Path).Length -gt 256MB) { throw 'Store upload archive exceeds the supported 256 MB single-upload limit.' }
     try {
         $null = Invoke-WebRequest -Uri $uri -Method Put -InFile $Path -ContentType 'application/zip' -Headers @{
             'x-ms-blob-type' = 'BlockBlob'; 'x-ms-version' = '2021-12-02'; 'x-ms-date' = [DateTime]::UtcNow.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
         } -TimeoutSec 300
-    } catch { throw 'Store image upload failed. Request details were withheld to protect the signed upload URL.' }
+    } catch { throw 'Store archive upload failed. Request details were withheld to protect the signed upload URL.' }
 }
 
 function Invoke-StoreApi {
@@ -190,7 +229,14 @@ function Invoke-StoreListingUpdate {
     param([Parameter(Mandatory)][Collections.IDictionary]$Listings,
         [Parameter(Mandatory)][string]$ResolvedListingPath,
         [Parameter(Mandatory)][ValidateSet('listing-verify', 'listing-submit')][string]$Mode,
-        [string]$ProductId = '9NN7GSPR8W9R')
+        [string]$ProductId = '9NN7GSPR8W9R',
+        [string]$PackagePath,
+        [version]$PackageVersion)
+    $packageInput = $null
+    if ($PackagePath) {
+        if ($null -eq $PackageVersion) { throw 'A package version is required for a combined submission.' }
+        $packageInput = Read-StorePackageInput -Path $PackagePath -Version $PackageVersion
+    } elseif ($null -ne $PackageVersion) { throw 'A package path is required for a combined submission.' }
     try {
         $access = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$env:MSSTORE_TENANT_ID/oauth2/v2.0/token" -Method Post -Body @{
             grant_type = 'client_credentials'; client_id = $env:MSSTORE_CLIENT_ID
@@ -207,11 +253,11 @@ function Invoke-StoreListingUpdate {
     $publishedKey = Get-StoreFieldKey -Object $application -Name 'lastPublishedApplicationSubmission'
     if (!$publishedKey -or !$application[$publishedKey]) { throw 'The application has no published submission to preserve.' }
     $published = Invoke-StoreApi -Method Get -Path "/applications/$productId/submissions/$($application[$publishedKey].id)"
-    $plan = New-StoreListingPlan -Published $published -Listings $Listings -RootDirectory (Split-Path $ResolvedListingPath -Parent)
+    $plan = New-StoreListingPlan -Published $published -Listings $Listings -RootDirectory (Split-Path $ResolvedListingPath -Parent) -Package $packageInput
     $pendingKey = Get-StoreFieldKey -Object $application -Name 'pendingApplicationSubmission'
     $hasPending = $pendingKey -and $application[$pendingKey]
     Write-Host "Listing plan: locales $($plan.Locales -join ', '); $($plan.ImageCount) screenshots; pending submission $([bool]$hasPending)."
-    Write-Host 'Unspecified locales, listing fields, image types and packages are preserved.'
+    Write-Host "Package replacement: $($plan.PackageIncluded). Unspecified locales, listing fields and image types are preserved."
     if ($Mode -eq 'listing-verify') {
         Write-Host 'Listing plan verified against the published submission. No Store submission was changed.'
         return
@@ -221,8 +267,8 @@ function Invoke-StoreListingUpdate {
     $null = New-Item -ItemType Directory -Path $temporaryDirectory
     $createdSubmissionId = $null
     try {
-        $archivePath = Join-Path $temporaryDirectory 'images.zip'
-        if ($plan.ImageCount -gt 0) { New-StoreImageArchive -Assets $plan.Assets -Path $archivePath }
+        $archivePath = Join-Path $temporaryDirectory 'submission.zip'
+        if ($plan.Assets.Count -gt 0) { New-StoreImageArchive -Assets $plan.Assets -Path $archivePath }
         # 作成直前にも読み直し、審査中の提出を上書きしない。
         $application = Invoke-StoreApi -Method Get -Path "/applications/$productId"
         $pendingKey = Get-StoreFieldKey -Object $application -Name 'pendingApplicationSubmission'
@@ -231,11 +277,11 @@ function Invoke-StoreListingUpdate {
         $createdSubmissionId = $draft.id
         if ([string]::IsNullOrWhiteSpace($createdSubmissionId)) { throw 'Store did not return the created submission ID.' }
         # APIが複製したdraftを基準にすることで、公開済み以外の新しい状態も保持する。
-        $plan = New-StoreListingPlan -Published $draft -Listings $Listings -RootDirectory (Split-Path $ResolvedListingPath -Parent)
+        $plan = New-StoreListingPlan -Published $draft -Listings $Listings -RootDirectory (Split-Path $ResolvedListingPath -Parent) -Package $packageInput
         $updated = Invoke-StoreApi -Method Put -Path "/applications/$productId/submissions/$createdSubmissionId" -Body $plan.Submission
-        if ($plan.ImageCount -gt 0) {
+        if ($plan.Assets.Count -gt 0) {
             Send-StoreImageArchive -Path $archivePath -UploadUrl $updated.fileUploadUrl
-            Write-Host 'Listing image archive uploaded.'
+            Write-Host 'Submission asset archive uploaded.'
         }
         $null = Invoke-StoreApi -Method Post -Path "/applications/$productId/submissions/$createdSubmissionId/commit"
         Write-Host "Listing submission $createdSubmissionId committed."

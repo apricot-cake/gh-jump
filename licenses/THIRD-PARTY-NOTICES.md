@@ -1,6 +1,6 @@
 # 第三者ソフトウェアのライセンス
 
-GH Jump の独自コードには、パッケージのルートにある `LICENSE`（MIT）を適用します。
+gh jump の独自コードには、パッケージのルートにある `LICENSE`（MIT）を適用します。
 以下の第三者ソフトウェアには、それぞれのライセンスを適用します。Windows SDK の配布コードには Microsoft の SDK ライセンス条項を適用します。
 
 | コンポーネント | 配布対象 | ライセンス文書 |
@@ -22,4 +22,4 @@ GH Jump の独自コードには、パッケージのルートにある `LICENSE
 - Windows SDK: NuGet パッケージの `licenseUrl` が指定する [Microsoft のライセンス原文](https://aka.ms/WinSDKLicenseURL)。RTF の原文を変更せず同梱しています。
 - Octicons: [公式リポジトリのコミット 923a31b34542702800cb90a0fd390e2e60dd92ac](https://github.com/primer/octicons/tree/923a31b34542702800cb90a0fd390e2e60dd92ac)。元の文書は `Assets/Octicons/LICENSE` にも含まれています。
 
-依存パッケージや .NET SDK／ランタイムのバージョンを更新した場合は、配布対象と原文を再確認してください。テストランナーとビルド専用の CsWinRT ツールはアプリに含まれません。GitHub CLI はユーザーが別途インストールする前提で、GH Jump のパッケージには含まれません。
+依存パッケージや .NET SDK／ランタイムのバージョンを更新した場合は、配布対象と原文を再確認してください。テストランナーとビルド専用の CsWinRT ツールはアプリに含まれません。GitHub CLI はユーザーが別途インストールする前提で、gh jump のパッケージには含まれません。

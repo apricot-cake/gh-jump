@@ -180,17 +180,17 @@ function Open-Repository {
         Invoke-Winapp @('ui', 'send-keys', $ActivationShortcut, '-w', "$($front.hwnd)", '--via', 'send-input', '--allow-system-keys') | Out-Null
     }
     Invoke-Winapp @('ui', 'wait-for', 'MainSearchBox', '-a', $palette, '--timeout', "$TimeoutMilliseconds") | Out-Null
-    # GH Jump pages have distinct placeholders; Escape returns to the root without executing a command.
+    # gh jump pages have distinct placeholders; Escape returns to the root without executing a command.
     for ($back = 0; $back -lt 3; $back++) {
         $search = Invoke-Winapp @('ui', 'get-property', 'MainSearchBox', '-a', $palette, '--property', 'Name')
         if ($search.properties.Name -notin @('Search owner/repository', 'Issues, Pull requests, Actions, Create…', 'Create issue or pull request')) { break }
         Send-PaletteKey 'esc'
         Wait-PalettePage $search.properties.Name -Different
     }
-    Write-Step 'Find GH Jump'
+    Write-Step 'Find gh jump'
     Set-PaletteQuery 'gh'
-    Assert-FirstItem 'GH Jump' 'gh-jump.repositories'
-    Write-Step 'Enter GH Jump'
+    Assert-FirstItem 'gh jump' 'gh-jump.repositories'
+    Write-Step 'Enter gh jump'
     Send-PaletteKey 'enter'
     Wait-PalettePage 'Search owner/repository'
     if (-not $script:repositorySelectionChecked) {

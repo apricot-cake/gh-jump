@@ -36,7 +36,7 @@ try {
     try { $oversizeFile.SetLength(50MB + 1) } finally { $oversizeFile.Dispose() }
 
     $published = @{
-        applicationPackages = @(@{ fileName = 'existing.msixbundle'; fileStatus = 'Uploaded'; id = 'package-123' })
+        applicationPackages = @(@{ fileName = 'existing.msixbundle'; fileStatus = 'Uploaded'; id = 'package-123'; version = '1.0.0.0' })
         pricing = @{ priceId = 'Free'; isAdvancedPricingModel = $false }
         targetPublishMode = 'Immediate'
         notesForCertification = 'Existing notes'
@@ -57,6 +57,20 @@ try {
         }
     }
     $publishedBefore = ConvertTo-TestJson $published
+    $bundlePath = Join-Path $fixtureRoot 'GHJump_1.0.1.0_Bundle.msixbundle'
+    $bundleArchive = [IO.Compression.ZipFile]::Open($bundlePath, [IO.Compression.ZipArchiveMode]::Create)
+    try {
+        $bundleEntry = $bundleArchive.CreateEntry('AppxMetadata/AppxBundleManifest.xml')
+        $writer = [IO.StreamWriter]::new($bundleEntry.Open())
+        try { $writer.Write('<Bundle><Identity Name="apricot-cake.GHJump" Version="1.0.1.0" /></Bundle>') } finally { $writer.Dispose() }
+    } finally { $bundleArchive.Dispose() }
+    $packageInput = Read-StorePackageInput -Path $bundlePath -Version ([version]'1.0.1.0')
+    Assert-Rejected { Read-StorePackageInput -Path (Join-Path $fixtureRoot 'GHJump_1.0.2.0_Bundle.msixbundle') -Version ([version]'1.0.2.0') } 'Missing bundle files must be rejected.'
+    Assert-Rejected { Read-StorePackageInput -Path $bundlePath -Version ([version]'1.0.2.0') } 'Bundle file names must match the application manifest version.'
+    Assert-Rejected { Read-StorePackageInput -Path $bundlePath -Version ([version]'1.0.1.1') } 'Store bundle revisions must remain zero.'
+    $wrongBundlePath = Join-Path $fixtureRoot 'GHJump_1.0.2.0_Bundle.msixbundle'
+    Copy-Item -LiteralPath $bundlePath -Destination $wrongBundlePath
+    Assert-Rejected { Read-StorePackageInput -Path $wrongBundlePath -Version ([version]'1.0.2.0') } 'The actual bundle manifest version must match the requested version.'
     $requested = @{
         'en-us' = @{
             description = 'Updated description'
@@ -67,6 +81,25 @@ try {
         }
     }
     $plan = New-StoreListingPlan -Published $published -Listings $requested -RootDirectory $fixtureRoot
+    $combinedPlan = New-StoreListingPlan -Published $published -Listings $requested -RootDirectory $fixtureRoot -Package $packageInput
+    Assert-True ($combinedPlan.PackageIncluded -and $combinedPlan.ImageCount -eq 2 -and $combinedPlan.Assets.Count -eq 3) 'Combined plans must include one bundle alongside localized screenshots.'
+    Assert-True ($combinedPlan.Submission.applicationPackages[0].fileStatus -ceq 'PendingDelete' -and $combinedPlan.Submission.applicationPackages[0].id -ceq 'package-123') 'Combined plans must preserve the existing package identity while marking it for replacement.'
+    $packageUpload = @($combinedPlan.Submission.applicationPackages | Where-Object { $_.fileStatus -eq 'PendingUpload' })
+    Assert-True ($packageUpload.Count -eq 1 -and $packageUpload[0].fileName -ceq 'GHJump_1.0.1.0_Bundle.msixbundle' -and
+        $packageUpload[0].minimumDirectXVersion -ceq 'None' -and $packageUpload[0].minimumSystemRam -ceq 'None' -and $packageUpload[0].Count -eq 4) 'New package metadata must contain the four official required fields.'
+    $sameVersion = ConvertTo-TestJson $packageInput | ConvertFrom-Json -AsHashtable
+    $sameVersion.Version = '1.0.0.0'
+    Assert-Rejected { New-StoreListingPlan -Published $published -Listings $requested -RootDirectory $fixtureRoot -Package $sameVersion } 'The new version must exceed every published version.'
+    $newerPublished = ConvertTo-TestJson $published | ConvertFrom-Json -AsHashtable
+    $newerPublished.applicationPackages += @{ fileName = 'newer.msix'; fileStatus = 'Uploaded'; version = '1.0.2.0' }
+    Assert-Rejected { New-StoreListingPlan -Published $newerPublished -Listings $requested -RootDirectory $fixtureRoot -Package $packageInput } 'A newer published package in another architecture must prevent downgrade.'
+    $combinedArchivePath = Join-Path $fixtureRoot 'combined.zip'
+    New-StoreImageArchive -Assets $combinedPlan.Assets -Path $combinedArchivePath
+    $combinedArchive = [IO.Compression.ZipFile]::OpenRead($combinedArchivePath)
+    try {
+        Assert-True ($combinedArchive.Entries.Count -eq 3 -and $null -ne $combinedArchive.GetEntry('GHJump_1.0.1.0_Bundle.msixbundle') -and
+            $null -ne $combinedArchive.GetEntry('en-us/images/repositories.png')) 'The same upload ZIP must contain package and listing images.'
+    } finally { $combinedArchive.Dispose() }
     Assert-True ((ConvertTo-TestJson $published) -ceq $publishedBefore) 'Planning must not mutate the published submission.'
     Assert-True ((ConvertTo-TestJson $plan.Submission.applicationPackages) -ceq (ConvertTo-TestJson $published.applicationPackages)) 'Existing packages must be preserved.'
     Assert-True ((ConvertTo-TestJson $plan.Submission.pricing) -ceq (ConvertTo-TestJson $published.pricing)) 'Existing pricing must be preserved.'
@@ -216,8 +249,13 @@ try {
     Assert-True ($repositoryPlan.ImageCount -eq 3) 'The committed listing must contain three valid screenshots.'
     $japaneseListings = Read-StoreListingInput -Path (Join-Path $repositoryRoot 'store/listings.ja-jp.json')
     $japanesePlan = New-StoreListingPlan -Published $englishOnly -Listings $japaneseListings -RootDirectory (Join-Path $repositoryRoot 'store')
-    Assert-True ($japanesePlan.ImageCount -eq 3 -and $japanesePlan.Locales.Count -eq 1 -and $japanesePlan.Locales[0] -eq 'ja-jp') 'The committed Japanese listing must add Japanese with three valid screenshots.'
-    Assert-True ((ConvertTo-TestJson $japanesePlan.Submission.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'The committed Japanese listing must preserve the published English listing.'
+    Assert-True ($japanesePlan.ImageCount -eq 3 -and $japanesePlan.Locales.Count -eq 2 -and 'ja-jp' -in $japanesePlan.Locales -and 'en-us' -in $japanesePlan.Locales) 'The committed listing must add Japanese screenshots and update both locale names.'
+    $expectedEnglish = ConvertTo-TestJson $englishOnly.listings['en-us'] | ConvertFrom-Json -AsHashtable
+    $expectedEnglish.baseListing.title = $japaneseListings['en-us'].title
+    $expectedEnglish.baseListing.description = $japaneseListings['en-us'].description
+    Assert-True ((ConvertTo-TestJson $japanesePlan.Submission.listings['en-us']) -ceq (ConvertTo-TestJson $expectedEnglish)) 'The combined Japanese listing must preserve English fields except the explicitly changed title and description.'
+    Assert-True ($japanesePlan.Submission.listings['en-us'].baseListing.title -ceq 'gh jump' -and
+        $japanesePlan.Submission.listings['ja-jp'].baseListing.title -ceq 'gh jump') 'Both Store locales must use the reserved lowercase name.'
     Assert-True ((ConvertTo-TestJson $published) -ceq $publishedBefore) 'All planning and failure paths must leave the published submission unchanged.'
 
     $savedFunctions = @{}
@@ -271,21 +309,37 @@ try {
             param([string]$Path, [string]$UploadUrl)
             $script:offlineCalls.Add(@{ Method = 'Upload'; Path = $Path; Body = $null })
             Assert-True (Test-Path -LiteralPath $Path -PathType Leaf) 'The real image ZIP must exist before upload.'
+            if ($script:offlineScenario -in @('success-combined', 'success-package-text-only')) {
+                $archive = [IO.Compression.ZipFile]::OpenRead($Path)
+                try {
+                    $expectedCount = if ($script:offlineScenario -eq 'success-package-text-only') { 1 } else { 3 }
+                    Assert-True ($archive.Entries.Count -eq $expectedCount -and $null -ne $archive.GetEntry('GHJump_1.0.1.0_Bundle.msixbundle')) 'The actual uploaded ZIP must include the bundle in combined submissions.'
+                } finally { $archive.Dispose() }
+            }
             if ($script:offlineScenario -eq 'upload-failed') { throw 'Offline upload failure.' }
         }
-        foreach ($scenario in @('verify', 'verify-pending', 'pending', 'pending-race', 'success', 'success-text-only', 'success-new-locale', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
+        foreach ($scenario in @('verify', 'verify-pending', 'verify-combined', 'invalid-package-version', 'missing-package', 'pending', 'pending-race', 'success', 'success-combined', 'success-package-text-only', 'success-text-only', 'success-new-locale', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
             $script:offlineScenario = $scenario
             $script:offlineApplicationReads = 0
             $script:offlineCalls = [Collections.Generic.List[object]]::new()
             $mode = if ($scenario -like 'verify*') { 'listing-verify' } else { 'listing-submit' }
-            $testListings = if ($scenario -eq 'success-text-only') { @{ 'en-us' = @{ description = 'Text only' } } }
+            $testListings = if ($scenario -in @('success-text-only', 'success-package-text-only')) { @{ 'en-us' = @{ description = 'Text only' } } }
                 elseif ($scenario -eq 'success-new-locale') { $newJapanese } else { $requested }
-            $operation = { Invoke-StoreListingUpdate -Listings $testListings -ResolvedListingPath $inputPath -Mode $mode -ProductId '9NN7GSPR8W9R' | Out-Null }
-            if ($scenario -in @('pending', 'pending-race', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
+            $packageOptions = @{}
+            if ($scenario -in @('verify-combined', 'success-combined', 'success-package-text-only', 'invalid-package-version', 'missing-package')) {
+                $packageOptions = @{ PackagePath = $bundlePath; PackageVersion = ([version]'1.0.1.0') }
+                if ($scenario -eq 'missing-package') { $packageOptions.PackagePath = Join-Path $fixtureRoot 'missing.msixbundle' }
+                if ($scenario -eq 'invalid-package-version') {
+                    $published.applicationPackages[0].version = '1.0.1.0'
+                }
+            }
+            $operation = { Invoke-StoreListingUpdate -Listings $testListings -ResolvedListingPath $inputPath -Mode $mode -ProductId '9NN7GSPR8W9R' @packageOptions | Out-Null }
+            if ($scenario -in @('invalid-package-version', 'missing-package', 'pending', 'pending-race', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
                 Assert-Rejected $operation "Scenario $scenario must fail without claiming a successful submission."
             } else { & $operation }
             $mutations = @($script:offlineCalls | Where-Object { $_.Method -in @('Post', 'Put', 'Upload') })
-            if ($scenario -in @('verify', 'verify-pending', 'pending', 'pending-race')) {
+            if ($scenario -eq 'invalid-package-version') { $published.applicationPackages[0].version = '1.0.0.0' }
+            if ($scenario -in @('verify', 'verify-pending', 'verify-combined', 'invalid-package-version', 'missing-package', 'pending', 'pending-race')) {
                 Assert-True ($mutations.Count -eq 0) "$scenario must not create, update, upload or commit a Store submission."
                 continue
             }
@@ -294,9 +348,14 @@ try {
             Assert-True ($sequence -ceq $expectedSequence) 'The submission must create a draft, update metadata, upload images, then commit; upload failure must prevent commit.'
             $put = @($mutations | Where-Object { $_.Method -eq 'Put' })[0]
             Assert-True ($put.Body.notesForCertification -ceq 'Fresh draft notes') 'The PUT must preserve fresh draft fields, not overwrite them with the published snapshot.'
-            Assert-True ((ConvertTo-TestJson $put.Body.applicationPackages) -ceq (ConvertTo-TestJson $published.applicationPackages)) 'The API PUT must preserve existing packages.'
+            if ($scenario -in @('success-combined', 'success-package-text-only')) {
+                Assert-True ($put.Body.applicationPackages.Count -eq 2 -and $put.Body.applicationPackages[0].fileStatus -ceq 'PendingDelete' -and
+                    $put.Body.applicationPackages[1].fileStatus -ceq 'PendingUpload') 'The same draft PUT must replace packages with the listing update.'
+            } else {
+                Assert-True ((ConvertTo-TestJson $put.Body.applicationPackages) -ceq (ConvertTo-TestJson $published.applicationPackages)) 'The API PUT must preserve existing packages.'
+            }
             $newImages = @($put.Body.listings['en-us'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
-            if ($scenario -eq 'success-text-only') {
+            if ($scenario -in @('success-text-only', 'success-package-text-only')) {
                 Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us'].baseListing.images) -ceq (ConvertTo-TestJson $published.listings['en-us'].baseListing.images)) 'Text-only API updates must preserve every image without uploading an archive.'
             } elseif ($scenario -eq 'success-new-locale') {
                 Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'Adding Japanese through the API must leave every English listing field and image unchanged.'

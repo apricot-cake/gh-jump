@@ -13,9 +13,9 @@ public sealed class NavigationTests
     {
         using var provider = new JumpCommandsProvider();
         Assert.Equal("apricot-cake.gh-jump", provider.Id);
-        Assert.Equal("GH Jump", provider.DisplayName);
+        Assert.Equal("gh jump", provider.DisplayName);
         var command = Assert.Single(provider.TopLevelCommands());
-        Assert.Equal("GH Jump", command.Title);
+        Assert.Equal("gh jump", command.Title);
         var page = Assert.IsType<RepositoriesPage>(command.Command);
         Assert.Equal("gh-jump.repositories", page.Id);
         Assert.False((object)page is IDynamicListPage);

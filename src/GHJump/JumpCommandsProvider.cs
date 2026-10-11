@@ -11,9 +11,9 @@ public sealed partial class JumpCommandsProvider : CommandProvider, IDisposable
     public JumpCommandsProvider()
     {
         Id = "apricot-cake.gh-jump";
-        DisplayName = "GH Jump";
+        DisplayName = "gh jump";
         Icon = JumpIcons.Get("repo");
-        _commands = [new CommandItem(_repositories) { Title = "GH Jump", Subtitle = "Search repositories and open GitHub" }];
+        _commands = [new CommandItem(_repositories) { Title = "gh jump", Subtitle = "Search repositories and open GitHub" }];
     }
 
     public override ICommandItem[] TopLevelCommands() => _commands;

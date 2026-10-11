@@ -7,4 +7,4 @@ Add-AppxPackage -Register $manifest
 [xml]$packageManifest = Get-Content -LiteralPath $manifest -Raw
 Get-AppxPackage -Name $packageManifest.Package.Identity.Name | Select-Object Name, Version, InstallLocation
 & "$PSScriptRoot/Restart-CommandPalette.ps1"
-Write-Host 'Open GH Jump in Command Palette.'
+Write-Host 'Open gh jump in Command Palette.'

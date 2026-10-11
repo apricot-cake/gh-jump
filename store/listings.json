@@ -1,6 +1,6 @@
 {
   "en-us": {
-    "description": "GH Jump integrates with the Windows Command Palette to help you find GitHub repositories and open their pages using your keyboard. Search by repository name, owner, or owner/repository. Open the repository home page, Issues, Pull requests, Actions, Releases, Security, or Settings, and jump to the screens for creating an issue or pull request. Requires Windows 11, PowerToys with Command Palette enabled, and GitHub CLI signed in to GitHub.com. Private, organization, and fork repositories are included when your GitHub CLI account has access. Browser access uses the GitHub account signed in to your browser. GH Jump does not create issues or pull requests automatically.",
+    "description": "gh jump integrates with the Windows Command Palette to help you find GitHub repositories and open their pages using your keyboard. Search by repository name, owner, or owner/repository. Open the repository home page, Issues, Pull requests, Actions, Releases, Security, or Settings, and jump to the screens for creating an issue or pull request. Requires Windows 11, PowerToys with Command Palette enabled, and GitHub CLI signed in to GitHub.com. Private, organization, and fork repositories are included when your GitHub CLI account has access. Browser access uses the GitHub account signed in to your browser. gh jump does not create issues or pull requests automatically.",
     "images": [
       {
         "fileName": "images/repositories.png",
@@ -17,6 +17,7 @@
         "description": "Open the screens for creating issues and pull requests.",
         "imageType": "Screenshot"
       }
-    ]
+    ],
+    "title": "gh jump"
   }
 }

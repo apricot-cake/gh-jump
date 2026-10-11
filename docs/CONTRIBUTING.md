@@ -39,14 +39,14 @@ NuGetの取得元は `NuGet.Config` でnuget.orgに固定しています。CIは
 
 ### Command Palette上のE2E
 
-実際のキー入力、ページ遷移、ブラウザーのURL、パレット終了はwinapp CLIで検証します。ロックを解除したWindowsのデスクトップ、登録済みGH Jump、ログイン済みGitHub CLIが必要です。検証中はパレットとブラウザーが前面に出ます。
+実際のキー入力、ページ遷移、ブラウザーのURL、パレット終了はwinapp CLIで検証します。ロックを解除したWindowsのデスクトップ、登録済みgh jump、ログイン済みGitHub CLIが必要です。検証中はパレットとブラウザーが前面に出ます。
 
 ```powershell
 winget install --id Microsoft.WinAppCli --exact --source winget
 ./scripts/Verify-UI.ps1
 ```
 
-このスクリプトはwinapp CLI 0.7.1を対象にしています。呼び出しキーの既定値はAlt＋Spaceです。Command Paletteで別のキーを設定している場合は、`-ActivationShortcut 'win+alt+space'`などで指定してください。`gh`検索でGH Jumpが先頭候補になることも検証します。
+このスクリプトはwinapp CLI 0.7.1を対象にしています。呼び出しキーの既定値はAlt＋Spaceです。Command Paletteで別のキーを設定している場合は、`-ActivationShortcut 'win+alt+space'`などで指定してください。`gh`検索でgh jumpが先頭候補になることも検証します。
 
 対象は`apricot-cake/gh-jump`です。別のリポジトリを使う場合は`-Repository 'owner/repository'`を指定します。トップ、Issues、Actions、Pull requests、Create → Issue、Create → Pull requestの6経路を確認します。作成画面を開くところまでで、IssueやPRは投稿しません。
 
@@ -66,7 +66,7 @@ Windows 11でPowerToysのCommand PaletteとGitHub CLIを有効にしてくださ
 ./scripts/Register-Dev.ps1 -Architecture x64
 ```
 
-登録スクリプトは登録後にCommand Paletteを再起動します。修正を反映するときも、ビルドとパッケージ作成後にこのスクリプトを実行してください。Command Paletteのエイリアス設定でGH Jumpに `gh` を登録すると、以後は `gh` で呼び出せます。
+登録スクリプトは登録後にCommand Paletteを再起動します。修正を反映するときも、ビルドとパッケージ作成後にこのスクリプトを実行してください。Command Paletteのエイリアス設定でgh jumpに `gh` を登録すると、以後は `gh` で呼び出せます。
 
 ## Microsoft Storeへの提出
 
@@ -74,7 +74,7 @@ Windows 11でPowerToysのCommand PaletteとGitHub CLIを有効にしてくださ
 
 ### 名前とパッケージ識別情報
 
-[Partner Center](https://partner.microsoft.com/)で開発者登録し、Apps and gamesからMSIX製品を作成して`GH Jump`の名前を予約します。Product management → Product identityに表示される次の3項目を取得します。値は省略・推測せず、そのまま使用してください。
+[Partner Center](https://partner.microsoft.com/)で開発者登録し、Apps and gamesからMSIX製品を作成して`gh jump`の名前を予約します。Product management → Product identityに表示される次の3項目を取得します。値は省略・推測せず、そのまま使用してください。
 
 | Partner Centerの項目 | manifestの反映先 |
 | --- | --- |
@@ -119,7 +119,7 @@ EnvironmentのVariablesには`MSSTORE_TENANT_ID`、`MSSTORE_CLIENT_ID`、`MSSTOR
 
 ### 掲載文と画像を更新する
 
-[store/listings.json](../store/listings.json)に言語ごとの変更を記述し、画像は`store/images`へ置きます。日本語の掲載情報は[store/listings.ja-jp.json](../store/listings.ja-jp.json)です。Actionsの`listing_file`で更新するファイルを選択します。入力はStore APIのフィールド名を使用します。`description`、`shortDescription`、`features`、`releaseNotes`、`keywords`、`title`、`licenseTerms`、`copyrightAndTrademarkInfo`を変更できます。`shortDescription`は1000文字までです。省略したフィールド・言語・公開済みパッケージはそのまま引き継ぎます。空文字や空配列は、そのフィールドを空にする指定です。
+[store/listings.json](../store/listings.json)に言語ごとの変更を記述し、画像は`store/images`へ置きます。日本語の掲載情報は[store/listings.ja-jp.json](../store/listings.ja-jp.json)です。このファイルには英語側の製品名も含め、両言語の名称を同じ提出で更新します。Actionsの`listing_file`で更新するファイルを選択します。入力はStore APIのフィールド名を使用します。`description`、`shortDescription`、`features`、`releaseNotes`、`keywords`、`title`、`licenseTerms`、`copyrightAndTrademarkInfo`を変更できます。`shortDescription`は1000文字までです。省略したフィールド・言語・公開済みパッケージはそのまま引き継ぎます。空文字や空配列は、そのフィールドを空にする指定です。
 
 `images`には`fileName`（掲載データファイルからの相対パス）、`description`、`imageType`を指定します。現在はデスクトップの`Screenshot`に対応しています。既存スクリーンショットを置き換え、ロゴなど他の種類の画像は維持します。PNGを使用し、横向きは1366×768以上、縦向きは768×1366以上にしてください。1言語につき10枚まで、1枚50MBまで、説明は200文字までです。パスは`store`内に限定します。画像を変更しない場合は`images`を省略します。[スクリーンショットの要件](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images)
 
@@ -129,7 +129,7 @@ EnvironmentのVariablesには`MSSTORE_TENANT_ID`、`MSSTORE_CLIENT_ID`、`MSSTOR
 ./scripts/Test-StoreListing.ps1
 ```
 
-変更をcommit・pushし、`listing-verify`で公開済み掲載情報との組み合わせを確認します。その後、`listing-submit`を実行してEnvironmentの承認を通します。画像はZIPにまとめ、APIが発行したアップロード先へ送信します。アップロード失敗時は審査への提出を行いません。
+変更をcommit・pushし、`listing-verify`で公開済み掲載情報との組み合わせを確認します。その後、`listing-submit`を実行してEnvironmentの承認を通します。アプリの表示名などパッケージも同時に更新する場合は、`listing-verify`と`listing-submit`の両方で`include_package`を有効にします。ビルド済みbundleと掲載情報を同じ提出へ送り、bundleのバージョンは公開済みの全パッケージより大きいことを確認します。製品名は事前にPartner Centerで予約してください。画像はZIPにまとめ、APIが発行したアップロード先へ送信します。アップロード失敗時は審査への提出を行いません。
 
 APIで作成した下書きをPartner Centerで編集すると、APIから更新・提出できなくなる場合があります。同じ下書きはAPIだけで管理してください。失敗時は提出状態を確認し、残った下書きを意図せず上書きしないようにします。プライバシーポリシー・サポート先・WebサイトURLは、このAPIの掲載フィールドでは更新できないためPartner CenterのPropertiesで変更します。[Microsoft Store submission API](https://learn.microsoft.com/en-us/windows/uwp/monetize/manage-app-submissions)
 
@@ -137,26 +137,26 @@ APIで作成した下書きをPartner Centerで編集すると、APIから更新
 
 Partner CenterのPackagesへbundleをアップロードします。パッケージの言語は`en-us`です。English (United States)のDescriptionには、次の説明案を使用できます。
 
-> GH Jump integrates with the Windows Command Palette to help you find GitHub repositories and open their pages using your keyboard. Search by repository name, owner, or owner/repository. Open the repository home page, Issues, Pull requests, Actions, Releases, Security, or Settings, and jump to the screens for creating an issue or pull request. Requires Windows 11, PowerToys with Command Palette enabled, and GitHub CLI signed in to GitHub.com. Private, organization, and fork repositories are included when your GitHub CLI account has access. Browser access uses the GitHub account signed in to your browser. GH Jump does not create issues or pull requests automatically.
+> gh jump integrates with the Windows Command Palette to help you find GitHub repositories and open their pages using your keyboard. Search by repository name, owner, or owner/repository. Open the repository home page, Issues, Pull requests, Actions, Releases, Security, or Settings, and jump to the screens for creating an issue or pull request. Requires Windows 11, PowerToys with Command Palette enabled, and GitHub CLI signed in to GitHub.com. Private, organization, and fork repositories are included when your GitHub CLI account has access. Browser access uses the GitHub account signed in to your browser. gh jump does not create issues or pull requests automatically.
 
 掲載スクリーンショットには公開リポジトリを使い、privateリポジトリ名や個人情報を含めないよう確認します。サポート先、プライバシーに関する説明、年齢区分、価格・公開地域などの必須項目を完成させてから提出します。審査結果と公開状態はPartner Centerで確認します。[Command Palette拡張の提出項目](https://learn.microsoft.com/en-us/windows/powertoys/command-palette/publish-extension-store)
 
 データの取り扱いは[使い方の「データとプライバシー」](使い方.md#データとプライバシー)に記載しています。英語掲載用の説明案は次のとおりです。掲載時はサポート先とプライバシー説明の公開URLが実際に閲覧できることを確認します。
 
-> GH Jump uses GitHub CLI to retrieve your GitHub.com account name and accessible repositories. Repository search runs locally. The extension caches repository IDs, owners, names, private/fork flags, and the cache timestamp as unencrypted JSON in %LOCALAPPDATA%\GHJump\Cache. Cache filenames contain the GitHub account name, and cached data may include private repository names. GH Jump does not extract or store authentication tokens; GitHub CLI manages authentication. The extension has no advertising, analytics, or developer-operated server. Actions open GitHub URLs in your default browser. To remove cached data, exit Command Palette and delete the cache directory. Uninstalling GH Jump may leave this directory behind. GitHub, GitHub CLI, the browser, PowerToys, and Microsoft Store operate under their own settings and policies. Support: https://github.com/apricot-cake/gh-jump/issues. Do not include tokens or private repository information in public reports.
+> gh jump uses GitHub CLI to retrieve your GitHub.com account name and accessible repositories. Repository search runs locally. The extension caches repository IDs, owners, names, private/fork flags, and the cache timestamp as unencrypted JSON in %LOCALAPPDATA%\GHJump\Cache. Cache filenames contain the GitHub account name, and cached data may include private repository names. gh jump does not extract or store authentication tokens; GitHub CLI manages authentication. The extension has no advertising, analytics, or developer-operated server. Actions open GitHub URLs in your default browser. To remove cached data, exit Command Palette and delete the cache directory. Uninstalling gh jump may leave this directory behind. GitHub, GitHub CLI, the browser, PowerToys, and Microsoft Store operate under their own settings and policies. Support: https://github.com/apricot-cake/gh-jump/issues. Do not include tokens or private repository information in public reports.
 
 Supplemental info → Additional Testing Informationには、依存するPowerToys・Command Palette・GitHub CLIと、次の審査者向け手順を記載します。GitHubのパスワードやトークンを提出欄へ記載する必要はありません。
 
 ```text
-GH Jump is an extension for the Windows Command Palette, not a standalone application.
+gh jump is an extension for the Windows Command Palette, not a standalone application.
 1. Use Windows 11. Install PowerToys and enable Command Palette.
 2. Install GitHub CLI: winget install --id GitHub.cli --exact
 3. Sign in using your own GitHub.com account:
    gh auth login --hostname github.com --web
    gh auth status --hostname github.com
    Use the default secure credential storage; do not use --insecure-storage.
-4. Install GH Jump, then reload extensions or restart Command Palette.
-5. Open Command Palette using its configured shortcut, search for GH Jump, and press Enter.
+4. Install gh jump, then reload extensions or restart Command Palette.
+5. Open Command Palette using its configured shortcut, search for gh jump, and press Enter.
 6. Search for a repository accessible to your account using owner/repository, then press Enter.
    Test these routes from the selected repository's action page:
    - Enter with an empty search: repository home page.
@@ -176,4 +176,4 @@ The optional gh alias is configured in Command Palette settings.
 
 Storeで公開され、インストールできることを確認した後、`microsoft/CmdPal-Extensions`へ登録するPRを送ります。Galleryは配布物を保管せず、StoreまたはWinGetのインストール先へリンクします。
 
-`extensions/apricot-cake/gh-jump/`に`extension.json`とアイコンを置き、`id`は`apricot-cake.gh-jump`、`title`は`GH Jump`、`installSources`は`type: msstore`と実際のStore product IDを指定します。product IDはmanifestのPackage/Identity/Nameとは別の値です。アイコンはPNGまたはJPEG、100KB以下で、PNGの推奨サイズは256×256です。公開先が未確定の間は、仮のproduct IDでPRを送らないでください。[Gallery投稿手順](https://github.com/microsoft/CmdPal-Extensions/blob/main/docs/CONTRIBUTING.md)
+`extensions/apricot-cake/gh-jump/`に`extension.json`とアイコンを置き、`id`は`apricot-cake.gh-jump`、`title`は`gh jump`、`installSources`は`type: msstore`と実際のStore product IDを指定します。product IDはmanifestのPackage/Identity/Nameとは別の値です。アイコンはPNGまたはJPEG、100KB以下で、PNGの推奨サイズは256×256です。公開先が未確定の間は、仮のproduct IDでPRを送らないでください。[Gallery投稿手順](https://github.com/microsoft/CmdPal-Extensions/blob/main/docs/CONTRIBUTING.md)

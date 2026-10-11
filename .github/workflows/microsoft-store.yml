@@ -21,6 +21,11 @@ on:
         options:
           - store/listings.json
           - store/listings.ja-jp.json
+      include_package:
+        description: 掲載内容と同じ提出で検証済みパッケージも更新（listingモードのみ）
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -87,4 +92,5 @@ jobs:
           MSSTORE_SELLER_ID: ${{ vars.MSSTORE_SELLER_ID }}
           STORE_MODE: ${{ inputs.mode }}
           STORE_LISTING_PATH: ${{ inputs.listing_file }}
-        run: ./scripts/Submit-Store.ps1 -Mode $env:STORE_MODE -ListingPath $env:STORE_LISTING_PATH
+          STORE_INCLUDE_PACKAGE: ${{ inputs.include_package }}
+        run: ./scripts/Submit-Store.ps1 -Mode $env:STORE_MODE -ListingPath $env:STORE_LISTING_PATH -IncludePackage:([bool]::Parse($env:STORE_INCLUDE_PACKAGE))

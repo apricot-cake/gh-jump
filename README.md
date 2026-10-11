@@ -1,4 +1,4 @@
-# GH Jump
+# gh jump
 
 GitHubのリポジトリを選び、トップページ、Issues、Pull requests、Actionsなどへ移動するPowerToys Command Palette拡張です。GitHub CLIでログイン済みの開発者を対象にしています。
 
@@ -12,7 +12,7 @@ Windows 11、PowerToysのCommand Palette、GitHub CLIが必要です。
 
 ## 使い方
 
-Command PaletteでGH Jumpを開き、リポジトリを検索してEnterで選びます。続けてEnterを押すとリポジトリトップ、`a` → EnterでActionsを開きます。呼び出し用の `gh` はCommand Paletteの標準エイリアス設定で登録します。
+Command Paletteでgh jumpを開き、リポジトリを検索してEnterで選びます。続けてEnterを押すとリポジトリトップ、`a` → EnterでActionsを開きます。呼び出し用の `gh` はCommand Paletteの標準エイリアス設定で登録します。
 
 認証、操作例、アクション一覧、制限事項は[使い方](docs/使い方.md)を参照してください。
 
@@ -34,4 +34,4 @@ CreateからIssueまたはPull requestの作成画面を開きます。
 
 ## ライセンス
 
-GH Jumpの独自コードは[MIT License](LICENSE)です。第三者ソフトウェアにはそれぞれのライセンスを適用します。[第三者通知](licenses/THIRD-PARTY-NOTICES.md)と各ライセンス原文はMSIXにも含め、パッケージ検証で同梱と内容の一致を確認します。
+gh jumpの独自コードは[MIT License](LICENSE)です。第三者ソフトウェアにはそれぞれのライセンスを適用します。[第三者通知](licenses/THIRD-PARTY-NOTICES.md)と各ライセンス原文はMSIXにも含め、パッケージ検証で同梱と内容の一致を確認します。

@@ -1,6 +1,7 @@
 param(
     [ValidateSet('verify', 'submit', 'listing-verify', 'listing-submit')][string]$Mode = 'verify',
-    [string]$ListingPath = 'store/listings.json'
+    [string]$ListingPath = 'store/listings.json',
+    [switch]$IncludePackage
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -43,9 +44,17 @@ foreach ($name in @('MSSTORE_TENANT_ID', 'MSSTORE_CLIENT_ID', 'MSSTORE_SELLER_ID
 
 $listingInput = $null
 $resolvedListingPath = $null
+$packageOptions = @{}
+if ($IncludePackage -and $Mode -notlike 'listing-*') { throw 'IncludePackage is only supported with listing-verify or listing-submit.' }
 if ($Mode -like 'listing-*') {
     $resolvedListingPath = if ([IO.Path]::IsPathRooted($ListingPath)) { $ListingPath } else { Join-Path $root $ListingPath }
     $listingInput = Read-StoreListingInput -Path $resolvedListingPath
+    if ($IncludePackage) {
+        [xml]$manifest = Get-Content (Join-Path $root 'src/GHJump/Package.appxmanifest') -Raw
+        $version = [version]$manifest.Package.Identity.Version
+        $packageOptions = @{ PackagePath = (Join-Path $root "artifacts/packages/GHJump_${version}_Bundle.msixbundle"); PackageVersion = $version }
+        $null = Read-StorePackageInput -Path $packageOptions.PackagePath -Version $version
+    }
 }
 
 try {
@@ -59,7 +68,7 @@ try {
     } catch { throw 'Could not obtain the GitHub OIDC token. Request details were withheld.' }
     Write-Output "::add-mask::$env:MSSTORE_CLIENT_ASSERTION"
     if ($Mode -like 'listing-*') {
-        Invoke-StoreListingUpdate -Listings $listingInput -ResolvedListingPath $resolvedListingPath -Mode $Mode -ProductId $productId
+        Invoke-StoreListingUpdate -Listings $listingInput -ResolvedListingPath $resolvedListingPath -Mode $Mode -ProductId $productId @packageOptions
         return
     }
     $null = Invoke-StoreCli -Arguments @('reconfigure', '--tenantId', $env:MSSTORE_TENANT_ID,

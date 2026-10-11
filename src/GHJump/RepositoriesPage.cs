@@ -23,7 +23,7 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
     {
         _provider = provider;
         Id = "gh-jump.repositories";
-        Title = "GH Jump";
+        Title = "gh jump";
         Name = "Open";
         Icon = JumpIcons.Get("repo");
         PlaceholderText = "Search owner/repository";
@@ -99,7 +99,7 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
                 _items = items;
             }
 
-            Title = $"GH Jump · {_provider.Account}";
+            Title = $"gh jump · {_provider.Account}";
             EmptyContent = new CommandItem(_refresh) { Title = "No repositories", Subtitle = "Check your account, permissions and organization SSO; then refresh" };
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
