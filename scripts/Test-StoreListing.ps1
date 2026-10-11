@@ -93,6 +93,43 @@ try {
     Assert-True ((ConvertTo-TestJson $textOnly.Submission.listings['en-us'].baseListing.images) -ceq (ConvertTo-TestJson $published.listings['en-us'].baseListing.images)) 'Text-only updates must preserve every image.'
     Assert-True (@($textOnly.Assets).Count -eq 0 -and $textOnly.ImageCount -eq 0) 'Text-only updates must not create image uploads.'
 
+    $englishOnly = ConvertTo-TestJson $published | ConvertFrom-Json -AsHashtable
+    $englishOnly.listings.Remove('ja-jp')
+    $englishOnlyBefore = ConvertTo-TestJson $englishOnly
+    $newJapanese = @{
+        'ja-jp' = @{
+            title = 'GH Jump'; description = 'GitHubのリポジトリを検索して開きます。'
+            shortDescription = 'Command PaletteからGitHubへ移動。'
+            features = @('取得済みのリポジトリを高速検索')
+            images = @(@{ fileName = 'images/repositories.png'; imageType = 'Screenshot'; description = 'リポジトリ一覧' })
+        }
+    }
+    $added = New-StoreListingPlan -Published $englishOnly -Listings $newJapanese -RootDirectory $fixtureRoot
+    Assert-True ((ConvertTo-TestJson $englishOnly) -ceq $englishOnlyBefore) 'Adding a locale must not mutate the published submission.'
+    Assert-True ((ConvertTo-TestJson $added.Submission.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'Adding Japanese must preserve every English listing field and image.'
+    $addedBase = $added.Submission.listings['ja-jp'].baseListing
+    Assert-True ($addedBase.title -ceq 'GH Jump' -and $addedBase.description -ceq $newJapanese['ja-jp'].description -and $addedBase.shortDescription -ceq $newJapanese['ja-jp'].shortDescription) 'The new locale must use explicitly supplied localized text.'
+    Assert-True (!$addedBase.Contains('releaseNotes') -and $added.Submission.listings['ja-jp'].platformOverrides.Count -eq 0) 'New locales must not clone English fields or platform overrides.'
+    Assert-True ($added.ImageCount -eq 1 -and $added.Assets[0].ArchivePath -ceq 'ja-jp/images/repositories.png') 'New locale uploads must use localized ZIP paths.'
+    $japaneseArchivePath = Join-Path $fixtureRoot 'japanese.zip'
+    New-StoreImageArchive -Assets $added.Assets -Path $japaneseArchivePath
+    $japaneseArchive = [IO.Compression.ZipFile]::OpenRead($japaneseArchivePath)
+    try { Assert-True ($japaneseArchive.Entries.Count -eq 1 -and $null -ne $japaneseArchive.GetEntry('ja-jp/images/repositories.png')) 'New Japanese ZIP entries must match the submission reference.' }
+    finally { $japaneseArchive.Dispose() }
+    foreach ($requiredField in @('title', 'description', 'images')) {
+        $incomplete = ConvertTo-TestJson $newJapanese | ConvertFrom-Json -AsHashtable
+        $incomplete['ja-jp'].Remove($requiredField)
+        Assert-Rejected { New-StoreListingPlan -Published $englishOnly -Listings $incomplete -RootDirectory $fixtureRoot } "New locales must reject missing $requiredField."
+    }
+    foreach ($requiredText in @('title', 'description')) {
+        $blank = ConvertTo-TestJson $newJapanese | ConvertFrom-Json -AsHashtable
+        $blank['ja-jp'][$requiredText] = '   '
+        Assert-Rejected { New-StoreListingPlan -Published $englishOnly -Listings $blank -RootDirectory $fixtureRoot } "New locales must reject blank $requiredText."
+    }
+    $emptyImages = ConvertTo-TestJson $newJapanese | ConvertFrom-Json -AsHashtable
+    $emptyImages['ja-jp'].images = @()
+    Assert-Rejected { New-StoreListingPlan -Published $englishOnly -Listings $emptyImages -RootDirectory $fixtureRoot } 'New locales must reject an empty screenshot collection.'
+
     $sharedImage = @{ fileName = 'images/actions.png'; imageType = 'Screenshot'; description = 'Actions' }
     $localized = New-StoreListingPlan -Published $published -Listings @{
         'en-us' = @{ images = @($sharedImage) }
@@ -144,6 +181,12 @@ try {
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/actions.png'; imageType = 'Screenshot'; description = 'One' }, @{ fileName = 'images/actions.png'; imageType = 'Screenshot'; description = 'Two' }) } } 'Duplicate image references must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ madeUpField = 'Value' } } 'Unsupported listing fields must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ description = 123 } } 'Non-string description must be rejected.'
+    Test-InvalidInput @{ 'en-us' = @{ shortDescription = 123 } } 'Non-string short descriptions must be rejected.'
+    Test-InvalidInput @{ 'en-us' = @{ shortDescription = ('x' * 1001) } } 'Short descriptions exceeding 1000 characters must be rejected.'
+    [IO.File]::WriteAllText($inputPath, (ConvertTo-TestJson @{ 'en-us' = @{ shortDescription = ('x' * 1000) } }))
+    $maximumShortInput = Read-StoreListingInput -Path $inputPath
+    $maximumShortPlan = New-StoreListingPlan -Published $published -Listings $maximumShortInput -RootDirectory $fixtureRoot
+    Assert-True ($maximumShortPlan.Submission.listings['en-us'].baseListing.shortDescription.Length -eq 1000) 'A 1000-character short description must be accepted.'
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/actions.png'; imageType = 'MadeUpType'; description = 'Invalid' }) } } 'Unsupported image types must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/actions.png'; imageType = 'Screenshot'; description = 'Invalid'; madeUpField = 'Value' }) } } 'Unsupported image fields must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ images = 'images/actions.png' } } 'Non-array image collection must be rejected.'
@@ -171,6 +214,10 @@ try {
     $repositoryListings = Read-StoreListingInput -Path (Join-Path $repositoryRoot 'store/listings.json')
     $repositoryPlan = New-StoreListingPlan -Published $published -Listings $repositoryListings -RootDirectory (Join-Path $repositoryRoot 'store')
     Assert-True ($repositoryPlan.ImageCount -eq 3) 'The committed listing must contain three valid screenshots.'
+    $japaneseListings = Read-StoreListingInput -Path (Join-Path $repositoryRoot 'store/listings.ja-jp.json')
+    $japanesePlan = New-StoreListingPlan -Published $englishOnly -Listings $japaneseListings -RootDirectory (Join-Path $repositoryRoot 'store')
+    Assert-True ($japanesePlan.ImageCount -eq 3 -and $japanesePlan.Locales.Count -eq 1 -and $japanesePlan.Locales[0] -eq 'ja-jp') 'The committed Japanese listing must add Japanese with three valid screenshots.'
+    Assert-True ((ConvertTo-TestJson $japanesePlan.Submission.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'The committed Japanese listing must preserve the published English listing.'
     Assert-True ((ConvertTo-TestJson $published) -ceq $publishedBefore) 'All planning and failure paths must leave the published submission unchanged.'
 
     $savedFunctions = @{}
@@ -196,9 +243,13 @@ try {
                 $pending = if ($script:offlineScenario -in @('pending', 'verify-pending') -or ($script:offlineScenario -eq 'pending-race' -and $script:offlineApplicationReads -gt 1)) { @{ id = 'pending-existing' } } else { $null }
                 return @{ id = '9NN7GSPR8W9R'; packageIdentityName = 'apricot-cake.GHJump'; lastPublishedApplicationSubmission = @{ id = 'published-123' }; pendingApplicationSubmission = $pending }
             }
-            if ($Method -eq 'Get' -and $Path -match '/submissions/published-123$') { return $published }
+            if ($Method -eq 'Get' -and $Path -match '/submissions/published-123$') {
+                if ($script:offlineScenario -eq 'success-new-locale') { return $englishOnly }
+                return $published
+            }
             if ($Method -eq 'Post' -and $Path -eq '/applications/9NN7GSPR8W9R/submissions') {
                 $draft = ConvertTo-TestJson $published | ConvertFrom-Json -AsHashtable
+                if ($script:offlineScenario -eq 'success-new-locale') { $draft.listings.Remove('ja-jp') }
                 $draft.id = 'draft-456'
                 $draft.notesForCertification = 'Fresh draft notes'
                 return $draft
@@ -222,12 +273,13 @@ try {
             Assert-True (Test-Path -LiteralPath $Path -PathType Leaf) 'The real image ZIP must exist before upload.'
             if ($script:offlineScenario -eq 'upload-failed') { throw 'Offline upload failure.' }
         }
-        foreach ($scenario in @('verify', 'verify-pending', 'pending', 'pending-race', 'success', 'success-text-only', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
+        foreach ($scenario in @('verify', 'verify-pending', 'pending', 'pending-race', 'success', 'success-text-only', 'success-new-locale', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
             $script:offlineScenario = $scenario
             $script:offlineApplicationReads = 0
             $script:offlineCalls = [Collections.Generic.List[object]]::new()
             $mode = if ($scenario -like 'verify*') { 'listing-verify' } else { 'listing-submit' }
-            $testListings = if ($scenario -eq 'success-text-only') { @{ 'en-us' = @{ description = 'Text only' } } } else { $requested }
+            $testListings = if ($scenario -eq 'success-text-only') { @{ 'en-us' = @{ description = 'Text only' } } }
+                elseif ($scenario -eq 'success-new-locale') { $newJapanese } else { $requested }
             $operation = { Invoke-StoreListingUpdate -Listings $testListings -ResolvedListingPath $inputPath -Mode $mode -ProductId '9NN7GSPR8W9R' | Out-Null }
             if ($scenario -in @('pending', 'pending-race', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
                 Assert-Rejected $operation "Scenario $scenario must fail without claiming a successful submission."
@@ -246,6 +298,10 @@ try {
             $newImages = @($put.Body.listings['en-us'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
             if ($scenario -eq 'success-text-only') {
                 Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us'].baseListing.images) -ceq (ConvertTo-TestJson $published.listings['en-us'].baseListing.images)) 'Text-only API updates must preserve every image without uploading an archive.'
+            } elseif ($scenario -eq 'success-new-locale') {
+                Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'Adding Japanese through the API must leave every English listing field and image unchanged.'
+                $japaneseUploads = @($put.Body.listings['ja-jp'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
+                Assert-True ($japaneseUploads.Count -eq 1 -and $japaneseUploads[0].fileName -ceq 'ja-jp/images/repositories.png') 'The new Japanese API listing must use the uploaded localized archive reference.'
             } else {
                 Assert-True ($newImages.Count -eq 2 -and @($newImages | Where-Object { $_.description -eq 'Repositories' }).Count -eq 1) 'The API PUT must include localized image references and captions.'
             }

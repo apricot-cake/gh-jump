@@ -13,6 +13,14 @@ on:
           - submit
           - listing-verify
           - listing-submit
+      listing_file:
+        description: 掲載更新に使用する言語別データ
+        type: choice
+        required: true
+        default: store/listings.json
+        options:
+          - store/listings.json
+          - store/listings.ja-jp.json
 
 permissions:
   contents: read
@@ -78,4 +86,5 @@ jobs:
           MSSTORE_CLIENT_ID: ${{ vars.MSSTORE_CLIENT_ID }}
           MSSTORE_SELLER_ID: ${{ vars.MSSTORE_SELLER_ID }}
           STORE_MODE: ${{ inputs.mode }}
-        run: ./scripts/Submit-Store.ps1 -Mode $env:STORE_MODE
+          STORE_LISTING_PATH: ${{ inputs.listing_file }}
+        run: ./scripts/Submit-Store.ps1 -Mode $env:STORE_MODE -ListingPath $env:STORE_LISTING_PATH

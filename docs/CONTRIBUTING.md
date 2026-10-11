@@ -119,9 +119,11 @@ EnvironmentのVariablesには`MSSTORE_TENANT_ID`、`MSSTORE_CLIENT_ID`、`MSSTOR
 
 ### 掲載文と画像を更新する
 
-[store/listings.json](../store/listings.json)に言語ごとの変更を記述し、画像は`store/images`へ置きます。入力はStore APIのフィールド名を使用します。`description`、`features`、`releaseNotes`、`keywords`、`title`、`licenseTerms`、`copyrightAndTrademarkInfo`を変更できます。省略したフィールド・言語・公開済みパッケージはそのまま引き継ぎます。空文字や空配列は、そのフィールドを空にする指定です。
+[store/listings.json](../store/listings.json)に言語ごとの変更を記述し、画像は`store/images`へ置きます。日本語の掲載情報は[store/listings.ja-jp.json](../store/listings.ja-jp.json)です。Actionsの`listing_file`で更新するファイルを選択します。入力はStore APIのフィールド名を使用します。`description`、`shortDescription`、`features`、`releaseNotes`、`keywords`、`title`、`licenseTerms`、`copyrightAndTrademarkInfo`を変更できます。`shortDescription`は1000文字までです。省略したフィールド・言語・公開済みパッケージはそのまま引き継ぎます。空文字や空配列は、そのフィールドを空にする指定です。
 
-`images`には`fileName`（listings.jsonからの相対パス）、`description`、`imageType`を指定します。現在はデスクトップの`Screenshot`に対応しています。既存スクリーンショットを置き換え、ロゴなど他の種類の画像は維持します。PNGを使用し、横向きは1366×768以上、縦向きは768×1366以上にしてください。1言語につき10枚まで、1枚50MBまで、説明は200文字までです。パスは`store`内に限定します。画像を変更しない場合は`images`を省略します。言語の新規追加はPartner Centerで先に行ってください。[スクリーンショットの要件](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images)
+`images`には`fileName`（掲載データファイルからの相対パス）、`description`、`imageType`を指定します。現在はデスクトップの`Screenshot`に対応しています。既存スクリーンショットを置き換え、ロゴなど他の種類の画像は維持します。PNGを使用し、横向きは1366×768以上、縦向きは768×1366以上にしてください。1言語につき10枚まで、1枚50MBまで、説明は200文字までです。パスは`store`内に限定します。画像を変更しない場合は`images`を省略します。[スクリーンショットの要件](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images)
+
+新しい掲載言語もAPIで追加できます。予約済みの製品名を`title`に指定し、空でない`description`と少なくとも1枚の`Screenshot`を含めてください。別の言語の掲載文を自動で複製しません。掲載言語の追加は拡張本体の翻訳とは別の変更です。[公式StoreBrokerの言語追加例](https://github.com/microsoft/StoreBroker/blob/master/Documentation/USAGE.md)、[掲載情報の要件](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/add-and-edit-store-listing-info)
 
 ```powershell
 ./scripts/Test-StoreListing.ps1

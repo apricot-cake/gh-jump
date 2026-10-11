@@ -40,7 +40,7 @@ function Read-StoreListingInput {
     param([Parameter(Mandatory)][string]$Path)
     $listings = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -AsHashtable
     if ($listings -isnot [Collections.IDictionary] -or $listings.Count -eq 0) { throw 'The listing file must contain locale objects.' }
-    $allowedFields = @('title', 'description', 'features', 'releaseNotes', 'keywords', 'licenseTerms', 'copyrightAndTrademarkInfo', 'images')
+    $allowedFields = @('title', 'description', 'shortDescription', 'features', 'releaseNotes', 'keywords', 'licenseTerms', 'copyrightAndTrademarkInfo', 'images')
     $rootDirectory = Split-Path ([IO.Path]::GetFullPath($Path)) -Parent
     foreach ($locale in $listings.Keys) {
         $archiveNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
@@ -55,6 +55,7 @@ function Read-StoreListingInput {
                 }
                 if ($field -eq 'features' -and $listing[$field].Count -gt 20) { throw 'features must contain no more than 20 items.' }
             } elseif ($field -ne 'images' -and $listing[$field] -isnot [string]) { throw "$field must be a string." }
+            if ($field -eq 'shortDescription' -and $listing[$field].Length -gt 1000) { throw 'shortDescription must not exceed 1000 characters.' }
         }
         if ($listing.Contains('images')) {
             if ($listing.images -isnot [array] -or $listing.images.Count -eq 0) { throw 'images must be a nonempty array.' }
@@ -90,7 +91,19 @@ function New-StoreListingPlan {
     $assets = [Collections.Generic.List[object]]::new()
     foreach ($locale in $Listings.Keys) {
         $localeKey = Get-StoreFieldKey -Object $submission[$listingsKey] -Name $locale
-        if (!$localeKey) { throw "Locale $locale must first be added in Partner Center." }
+        if (!$localeKey) {
+            $newListing = $Listings[$locale]
+            foreach ($requiredField in @('title', 'description')) {
+                if (!$newListing.Contains($requiredField) -or $newListing[$requiredField] -isnot [string] -or
+                    [string]::IsNullOrWhiteSpace($newListing[$requiredField])) { throw "New locale $locale requires an explicit nonempty $requiredField." }
+            }
+            if (!$newListing.Contains('images') -or $newListing.images -isnot [array] -or
+                @($newListing.images | Where-Object { $_.imageType -ceq 'Screenshot' }).Count -eq 0) {
+                throw "New locale $locale requires at least one Screenshot image."
+            }
+            $localeKey = $locale
+            $submission[$listingsKey][$localeKey] = @{ baseListing = @{}; platformOverrides = @{} }
+        }
         $baseListingKey = Get-StoreFieldKey -Object $submission[$listingsKey][$localeKey] -Name 'baseListing'
         if (!$baseListingKey -or $submission[$listingsKey][$localeKey][$baseListingKey] -isnot [Collections.IDictionary]) { throw 'The Store response did not contain a base listing.' }
         $destination = $submission[$listingsKey][$localeKey][$baseListingKey]
