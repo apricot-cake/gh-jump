@@ -26,7 +26,7 @@ if (args.Contains("--activate", StringComparer.Ordinal))
         var items = page.GetItems();
         if (items.Length == 0)
         {
-            throw new InvalidOperationException("The initial repository fetch returned no items.");
+            throw new InvalidOperationException($"The initial repository fetch returned no items: {page.EmptyContent?.Title}; {page.EmptyContent?.Subtitle}");
         }
 
         var repositoryItem = items.Single(item => item.Title == "gh-jump" && item.Subtitle == "apricot-cake/gh-jump");
