@@ -177,3 +177,17 @@ The optional gh alias is configured in Command Palette settings.
 Storeで公開され、インストールできることを確認した後、`microsoft/CmdPal-Extensions`へ登録するPRを送ります。Galleryは配布物を保管せず、StoreまたはWinGetのインストール先へリンクします。
 
 `extensions/apricot-cake/gh-jump/`に`extension.json`とアイコンを置き、`id`は`apricot-cake.gh-jump`、`title`は`gh jump`、`installSources`は`type: msstore`と実際のStore product IDを指定します。product IDはmanifestのPackage/Identity/Nameとは別の値です。アイコンはPNGまたはJPEG、100KB以下で、PNGの推奨サイズは256×256です。公開先が未確定の間は、仮のproduct IDでPRを送らないでください。[Gallery投稿手順](https://github.com/microsoft/CmdPal-Extensions/blob/main/docs/CONTRIBUTING.md)
+
+## プロダクトページ
+
+`website`にAstroの静的ページを置きます。Node.jsのバージョンは`.node-version`、依存関係は`website/package-lock.json`で固定します。
+
+```powershell
+cd website
+npm ci
+npm run dev
+npm run check
+npm run build
+```
+
+画像は`website/public/screenshots`、採用済みOcticonsは`website/public/icons`に置きます。変更をmainへpushすると、プロダクトページのワークフローが型検査とビルドを行い、GitHub Pagesへ公開します。アプリ本体のStore提出とは別の処理です。
