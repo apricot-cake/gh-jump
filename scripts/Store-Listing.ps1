@@ -210,6 +210,7 @@ function Invoke-StoreApi {
         Method = $Method
         Headers = @{ Authorization = "Bearer $script:storeAccessToken"; TenantId = $env:MSSTORE_TENANT_ID }
         TimeoutSec = 60
+        ContentType = 'application/json; charset=utf-8'
     }
     if ($null -ne $Body) {
         $parameters['Body'] = [Text.Encoding]::UTF8.GetBytes(($Body | ConvertTo-Json -Depth 100 -Compress))
@@ -221,7 +222,21 @@ function Invoke-StoreApi {
     } catch {
         $responseProperty = $_.Exception.PSObject.Properties['Response']
         $statusCode = if ($null -ne $responseProperty -and $null -ne $responseProperty.Value) { [int]$responseProperty.Value.StatusCode } else { 0 }
-        throw "Store API request failed (HTTP $statusCode). Raw response and request details were withheld."
+        $diagnostic = ''
+        if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+            try {
+                $errorBody = $_.ErrorDetails.Message | ConvertFrom-Json -AsHashtable
+                $nodes = @($errorBody) + @($errorBody['error']) + @($errorBody['errors'])
+                $codes = @($nodes | Where-Object { $_ -is [Collections.IDictionary] } | ForEach-Object { $_['code'] } |
+                    Where-Object { $_ -is [string] -and $_ -cmatch '^[A-Za-z][A-Za-z0-9_.-]{0,79}$' })
+                if ($codes.Count -gt 0) { $diagnostic = "; code $($codes -join ', ')" }
+                $messages = @($nodes | Where-Object { $_ -is [Collections.IDictionary] } | ForEach-Object { $_['message'] }) -join ' '
+                foreach ($phrase in @('request body', 'Content-Type', 'age rating', 'IARC', 'not supported', 'invalid state', 'published', 'pending submission', 'empty', 'tenant', 'permission')) {
+                    if ($messages -match [regex]::Escape($phrase)) { $diagnostic += "; mentions $phrase" }
+                }
+            } catch { }
+        }
+        throw "Store API $Method request failed (HTTP $statusCode$diagnostic). Raw response and request details were withheld."
     }
 }
 

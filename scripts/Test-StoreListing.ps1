@@ -366,6 +366,22 @@ try {
             }
         }
         Set-Item -LiteralPath Function:Invoke-StoreApi -Value $savedFunctions['Invoke-StoreApi']
+        function Invoke-RestMethod {
+            param($Uri, $Method, $Headers, $TimeoutSec, $ContentType, $Body)
+            Assert-True ($ContentType -eq 'application/json; charset=utf-8') 'Bodyless Store POST requests must explicitly use JSON rather than PowerShell form content type.'
+            Assert-True (-not $PSBoundParameters.ContainsKey('Body')) 'Create submission must not send a request body.'
+            return @{ id = 'created-test' }
+        }
+        $createdTest = Invoke-StoreApi -Method Post -Path '/applications/9NN7GSPR8W9R/submissions'
+        Assert-True ($createdTest.id -eq 'created-test') 'The bodyless POST response must be preserved.'
+        function Invoke-RestMethod {
+            $record = [Management.Automation.ErrorRecord]::new([InvalidOperationException]::new('private-secret'), 'offline', [Management.Automation.ErrorCategory]::InvalidOperation, $null)
+            $record.ErrorDetails = [Management.Automation.ErrorDetails]::new('{"code":"InvalidRequest","message":"request body includes private-secret https://example.com/?sig=secret"}')
+            throw $record
+        }
+        $diagnosticError = $null
+        try { $null = Invoke-StoreApi -Method Post -Path '/applications/9NN7GSPR8W9R/submissions' } catch { $diagnosticError = $_.Exception.Message }
+        Assert-True ($diagnosticError -match 'code InvalidRequest' -and $diagnosticError -match 'mentions request body' -and $diagnosticError -notmatch 'private-secret|sig=secret|https://') 'Safe diagnostics must identify the code and cause category without exposing arbitrary messages or URLs.'
         function Invoke-RestMethod { throw 'offline-secret-token-and-signed-upload-url' }
         $sanitizedError = $null
         try { $null = Invoke-StoreApi -Method Get -Path '/applications/9NN7GSPR8W9R' } catch { $sanitizedError = $_.Exception.Message }
