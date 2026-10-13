@@ -23,7 +23,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
       <Image src={repositories} alt="コマンドパレットのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
 
     </figure>
-    <div class="key-route" aria-label="リポジトリトップを開く操作"><kbd>gh</kbd><span>→</span><span>リポジトリ名</span><span>→</span><kbd>Enter</kbd><span>→</span><kbd>Enter</kbd></div>
+    <div class="key-route" aria-label="リポジトリを選ぶ操作"><kbd>gh</kbd><span>→</span><kbd>Enter</kbd><span>→</span><span>リポジトリ名</span><span>→</span><kbd>Enter</kbd></div>
 
   </section>
   <section class="feature wrap" aria-labelledby="actions-heading">
@@ -31,7 +31,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
       <h2 id="actions-heading">目的のページへすぐに</h2>
       <p>選んだリポジトリから、開きたいページへ移動できます。</p>
-      <p class="key-example"><kbd>a</kbd><span>→</span><kbd>Enter</kbd><span>Actionsを開く</span></p>
+      <p class="key-example"><span>行き先を選ぶ</span><span>→</span><kbd>Enter</kbd></p>
     </div>
     <figure><Image src={actions} alt="Repository top、Issues、Pull requests、Actionsなどが並ぶアクション一覧" widths={[640, 960, 1280]} sizes="(max-width: 800px) 92vw, 600px" format="webp" loading="lazy" /></figure>
   </section>
@@ -40,7 +40,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
       <h2 id="create-heading">Createから作成画面へ</h2>
       <p>作成画面も、キーボードで開けます。</p>
-      <p class="key-example"><kbd>c</kbd><span>→</span><kbd>Enter</kbd><span>→</span><kbd>i</kbd><span>→</span><kbd>Enter</kbd></p>
+      <p class="key-example"><span>Create</span><span>→</span><kbd>Enter</kbd><span>→</span><span>作成する項目</span><span>→</span><kbd>Enter</kbd></p>
     </div>
     <figure><Image src={create} alt="Create内のIssueとPull requestの候補一覧" widths={[640, 960, 1280]} sizes="(max-width: 800px) 92vw, 600px" format="webp" loading="lazy" /></figure>
   </section>
