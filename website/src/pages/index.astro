@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import StoreBadge from '../components/StoreBadge.astro';
 import { Image } from 'astro:assets';
+import launch from '../../public/screenshots/launch.png';
 import repositories from '../../public/screenshots/repositories.png';
 import actions from '../../public/screenshots/actions.png';
 import create from '../../public/screenshots/create.png';
@@ -16,11 +17,14 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
     <StoreBadge />
 
   </section>
+  <figure class="launch-demo wrap">
+    <Image src={launch} alt="コマンドパレットでghを入力し、gh jumpを選ぶ画面。先頭以外の候補は隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
+  </figure>
   <section class="repository-demo wrap" aria-labelledby="repositories-heading">
     <h2 id="repositories-heading">リポジトリをすばやく探す</h2>
     <p class="section-description">リポジトリ名、ユーザー・組織名、owner/repositoryで絞り込み。<br class="desktop-break" />privateやorganizationのリポジトリも、アクセス権のあるものを表示します。</p>
     <figure>
-      <Image src={repositories} alt="コマンドパレットのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
+      <Image src={repositories} alt="コマンドパレットのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="lazy" />
 
     </figure>
     <div class="key-route" aria-label="リポジトリを選ぶ操作"><kbd>gh</kbd><span>→</span><kbd>Enter</kbd><span>→</span><span>リポジトリ名</span><span>→</span><kbd>Enter</kbd></div>

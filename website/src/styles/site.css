@@ -62,3 +62,4 @@ code { font: .82rem ui-monospace, monospace; background: #f1f4f7; padding: 3px 6
 .store-badge img { width: 200px; height: auto; }
 .hero .store-badge { margin-top: 4px; }
 .feature-copy > p { margin-top: 20px; color: var(--muted); font-size: .88rem; }
+.launch-demo { max-width: 1000px; margin-bottom: 65px; }
