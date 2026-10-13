@@ -2,7 +2,7 @@
 import '@fontsource-variable/noto-sans-jp';
 import '../styles/site.css';
 interface Props { title?: string; description?: string; privacy?: boolean; }
-const { title = 'gh jump — GitHubへ、キーボードで。', description = 'PowerToysのコマンドパレットから、GitHubのリポジトリを検索して目的のページへ移動する拡張機能。', privacy = false } = Astro.props;
+const { title = 'gh jump — GitHubへキーボードで。', description = 'PowerToysのコマンドパレットから、GitHubのリポジトリを検索して目的のページへ移動する拡張機能。', privacy = false } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const canonical = `https://apricot-cake.com${base}${privacy ? 'privacy/' : ''}`;
 ---
