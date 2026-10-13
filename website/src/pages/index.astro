@@ -6,7 +6,6 @@ import launch from '../../public/screenshots/launch.png';
 import repositories from '../../public/screenshots/repositories.png';
 import actions from '../../public/screenshots/actions.png';
 import create from '../../public/screenshots/create.png';
-const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 ---
 <Layout>
@@ -47,10 +46,6 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
       <p class="key-example"><span>Create</span><span>→</span><kbd>Enter</kbd><span>→</span><span>作成する項目</span><span>→</span><kbd>Enter</kbd></p>
     </div>
     <figure><Image src={create} alt="Create内のIssueとPull requestの候補一覧" widths={[640, 960, 1280]} sizes="(max-width: 800px) 92vw, 600px" format="webp" loading="lazy" /></figure>
-  </section>
-  <section class="local wrap" aria-labelledby="local-heading">
-    <img src={`${base}icons/repo.svg`} width="64" height="64" alt="" />
-    <div><h2 id="local-heading">軽快なリポジトリ検索</h2><p>取得済みの一覧を使って、すばやく絞り込みます。</p></div>
   </section>
   <section class="setup wrap" aria-labelledby="setup-heading">
     <h2 id="setup-heading">使いはじめる</h2>

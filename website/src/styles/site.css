@@ -30,10 +30,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; paddin
 .feature { display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; gap: 60px; margin-top: 100px; }
 .reverse { grid-template-columns: 1.15fr 1fr; }
 .reverse .feature-copy { order: 2; }
-.local { display: flex; gap: 32px; align-items: center; max-width: 930px; margin-top: 100px; padding: 38px 44px; background: #f4f8fc; border-radius: 20px; }
-.local > img { flex: none; opacity: .75; }
-.local p { color: var(--muted); font-size: .86rem; margin-top: 14px; }
-.local a { display: inline-block; font-size: .8rem; margin-top: 12px; }
 .setup { padding: 88px 0 90px; text-align: center; }
 .setup-steps { padding-left: 30px; margin: 36px auto; max-width: 800px; list-style: decimal; text-align: left; }
 .setup-steps li { padding: 22px 0 22px 12px; border-top: 1px solid #e4e8ed; }
@@ -53,8 +49,6 @@ code { font: .82rem ui-monospace, monospace; background: #f1f4f7; padding: 3px 6
   .feature,.reverse { grid-template-columns: 1fr; gap: 26px; margin-top: 65px; }
   .reverse .feature-copy { order: 0; }
   .desktop-break { display: none; }
-  .local { margin-top: 65px; padding: 28px 24px; gap: 22px; align-items: start; }
-  .local > img { width: 38px; }
   .setup { padding: 65px 0; }
 }
 
