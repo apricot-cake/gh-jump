@@ -37,7 +37,6 @@ kbd { display: inline-flex; align-items: center; justify-content: center; paddin
 h3 { font-size: 1rem; }
 .setup-steps p { color: var(--muted); font-size: .85rem; margin-top: 10px; }
 code { font: .82rem ui-monospace, monospace; background: #f1f4f7; padding: 3px 6px; border-radius: 4px; overflow-wrap: anywhere; }
-.setup-steps li > code { display: block; width: fit-content; margin-top: 12px; padding: 8px 12px; }
 .privacy { max-width: 820px; padding: 50px 0 90px; }
 .privacy h1 { font-size: clamp(1.8rem, 1.5rem + 1vw, 2.3rem); margin-bottom: 32px; }
 .privacy h2 { font-size: 1.25rem; margin: 32px 0 16px; }
@@ -56,4 +55,3 @@ code { font: .82rem ui-monospace, monospace; background: #f1f4f7; padding: 3px 6
 .store-badge img { width: 200px; height: auto; }
 .hero .store-badge { margin-top: 4px; }
 .feature-copy > p { margin-top: 20px; color: var(--muted); font-size: .88rem; }
-.launch-demo { max-width: 1000px; margin-bottom: 65px; }
