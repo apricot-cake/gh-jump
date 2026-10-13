@@ -1,0 +1,3 @@
+Microsoft Store公式HTML-onlyバッジ（日本語・dark）、原文を変更せず使用。
+https://get.microsoft.com/images/ja%20dark.svg
+https://github.com/microsoft/app-store-badge#html-only

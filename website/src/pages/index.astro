@@ -1,60 +1,61 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import StoreBadge from '../components/StoreBadge.astro';
 import { Image } from 'astro:assets';
 import repositories from '../../public/screenshots/repositories.png';
 import actions from '../../public/screenshots/actions.png';
 import create from '../../public/screenshots/create.png';
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
-const store = 'https://apps.microsoft.com/detail/9NN7GSPR8W9R';
+
 ---
 <Layout>
   <section class="hero wrap" aria-labelledby="intro">
-    <p class="eyebrow">PowerToys Command Palette 拡張</p>
+    
     <h1 id="intro"><span>GitHubへ、</span><span>キーボードで。</span></h1>
-    <p class="intro">リポジトリを選んで、目的のページへ。<br />いつものGitHub CLIのログインを、そのまま使えます。</p>
-    <a class="store-button" href={store}>Microsoft Storeから入手</a>
-    <p class="requirements">Windows 11 · PowerToys · GitHub CLI</p>
+    <p class="intro">リポジトリを選んで、目的のページへ。<br />PowerToysのコマンドパレット拡張機能。</p>
+    <StoreBadge />
+    
   </section>
   <section class="repository-demo wrap" aria-labelledby="repositories-heading">
-    <h2 id="repositories-heading">名前を入力して、Enter</h2>
+    <h2 id="repositories-heading">リポジトリをすばやく探す</h2>
     <p class="section-description">リポジトリ名、ユーザー・組織名、owner/repositoryで絞り込み。<br class="desktop-break" />privateやorganizationのリポジトリも、アクセス権のあるものを表示します。</p>
     <figure>
-      <Image src={repositories} alt="Command Paletteのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
-      <figcaption>リポジトリ一覧。公開用の画像では、一部の名前を隠しています。</figcaption>
+      <Image src={repositories} alt="コマンドパレットのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
+      
     </figure>
     <div class="key-route" aria-label="リポジトリトップを開く操作"><kbd>gh</kbd><span>→</span><span>リポジトリ名</span><span>→</span><kbd>Enter</kbd><span>→</span><kbd>Enter</kbd></div>
-    <p class="route-caption">最後は何も入力せず、Enterでリポジトリトップへ。</p>
+    
   </section>
   <section class="feature wrap" aria-labelledby="actions-heading">
     <div class="feature-copy">
-      <p class="eyebrow">目的のページへ</p>
-      <h2 id="actions-heading">Actionsも、PRも。</h2>
-      <p>リポジトリを選んだら、行き先を絞ってEnter。Issues、Pull requests、Actions、Releases、Security、Settingsへ移動できます。</p>
+      
+      <h2 id="actions-heading">目的のページへ、すぐに。</h2>
+      <p>選んだリポジトリから、開きたいページへ移動できます。</p>
       <p class="key-example"><kbd>a</kbd><span>→</span><kbd>Enter</kbd><span>Actionsを開く</span></p>
     </div>
     <figure><Image src={actions} alt="Repository top、Issues、Pull requests、Actionsなどが並ぶアクション一覧" widths={[640, 960, 1280]} sizes="(max-width: 800px) 92vw, 600px" format="webp" loading="lazy" /></figure>
   </section>
   <section class="feature reverse wrap" aria-labelledby="create-heading">
     <div class="feature-copy">
-      <p class="eyebrow">新しく作るときは</p>
+      
       <h2 id="create-heading">Createから、作成画面へ。</h2>
-      <p>Issueの作成画面や、Pull requestの比較画面を開きます。候補がひとつになっても、自動で確定せずEnterを待ちます。</p>
+      <p>作成画面も、キーボードで開けます。</p>
       <p class="key-example"><kbd>c</kbd><span>→</span><kbd>Enter</kbd><span>→</span><kbd>i</kbd><span>→</span><kbd>Enter</kbd></p>
     </div>
     <figure><Image src={create} alt="Create内のIssueとPull requestの候補一覧" widths={[640, 960, 1280]} sizes="(max-width: 800px) 92vw, 600px" format="webp" loading="lazy" /></figure>
   </section>
   <section class="local wrap" aria-labelledby="local-heading">
-    <img src={`${base}icons/shield.svg`} width="64" height="64" alt="" />
-    <div><h2 id="local-heading">検索は、手元で。</h2><p>取得した一覧をローカルで絞り込むので、入力のたびにAPIへ問い合わせません。認証はGitHub CLIに任せ、拡張がトークンを保存することはありません。</p><a href={`${base}privacy/`}>データの取り扱いを見る</a></div>
+    <img src={`${base}icons/repo.svg`} width="64" height="64" alt="" />
+    <div><h2 id="local-heading">リポジトリ検索を、軽快に。</h2><p>取得済みの一覧を使って、すばやく絞り込みます。</p></div>
   </section>
   <section class="setup wrap" aria-labelledby="setup-heading">
     <h2 id="setup-heading">使いはじめる</h2>
     <ol class="setup-steps">
-      <li><h3>PowerToysとGitHub CLIを用意</h3><p>Command Paletteを有効にし、GitHub CLIでGitHub.comにログインします。</p><code>gh auth login --hostname github.com --web</code><p class="setup-links"><a href="https://learn.microsoft.com/windows/powertoys/">PowerToys</a> · <a href="https://cli.github.com/">GitHub CLI</a></p></li>
-      <li><h3>gh jumpをインストール</h3><p>Microsoft Storeから入手し、Command Paletteを再起動します。</p></li>
-      <li><h3>Command Paletteで開く</h3><p><code>gh jump</code>を検索してEnter。短く呼び出すなら、Command Paletteの標準エイリアス設定で<code>gh</code>を登録します。</p></li>
+      <li><h3>PowerToysとGitHub CLIを用意</h3><p>コマンドパレットを有効にし、GitHub CLIでGitHub.comにログインします。</p><code>gh auth login --hostname github.com --web</code><p class="setup-links"><a href="https://learn.microsoft.com/windows/powertoys/">PowerToys</a> · <a href="https://cli.github.com/">GitHub CLI</a></p></li>
+      <li><h3>gh jumpをインストール</h3><p>Microsoft Storeから入手し、コマンドパレットを再起動します。</p></li>
+      <li><h3>コマンドパレットで開く</h3><p><code>gh jump</code>を検索してEnter。短く呼び出すなら、コマンドパレットの標準エイリアス設定で<code>gh</code>を登録します。</p></li>
     </ol>
-    <a class="store-button" href={store}>Microsoft Storeから入手</a>
-    <p class="setup-note">GitHub.comに対応。アクション名は英語です。開いたページではブラウザー側のGitHubログインを使います。</p>
+    <StoreBadge />
+    
   </section>
 </Layout>
