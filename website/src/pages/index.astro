@@ -10,25 +10,25 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 <Layout>
   <section class="hero wrap" aria-labelledby="intro">
-    
+
     <h1 id="intro"><span>GitHubへ、</span><span>キーボードで。</span></h1>
     <p class="intro">リポジトリを選んで、目的のページへ。<br />PowerToysのコマンドパレット拡張機能。</p>
     <StoreBadge />
-    
+
   </section>
   <section class="repository-demo wrap" aria-labelledby="repositories-heading">
     <h2 id="repositories-heading">リポジトリをすばやく探す</h2>
     <p class="section-description">リポジトリ名、ユーザー・組織名、owner/repositoryで絞り込み。<br class="desktop-break" />privateやorganizationのリポジトリも、アクセス権のあるものを表示します。</p>
     <figure>
       <Image src={repositories} alt="コマンドパレットのリポジトリ一覧。gh-jump以外のリポジトリ名は四角で隠しています。" widths={[640, 960, 1280, 1616]} sizes="(max-width: 800px) 92vw, 1000px" format="webp" loading="eager" fetchpriority="high" />
-      
+
     </figure>
     <div class="key-route" aria-label="リポジトリトップを開く操作"><kbd>gh</kbd><span>→</span><span>リポジトリ名</span><span>→</span><kbd>Enter</kbd><span>→</span><kbd>Enter</kbd></div>
-    
+
   </section>
   <section class="feature wrap" aria-labelledby="actions-heading">
     <div class="feature-copy">
-      
+
       <h2 id="actions-heading">目的のページへ、すぐに。</h2>
       <p>選んだリポジトリから、開きたいページへ移動できます。</p>
       <p class="key-example"><kbd>a</kbd><span>→</span><kbd>Enter</kbd><span>Actionsを開く</span></p>
@@ -37,7 +37,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
   </section>
   <section class="feature reverse wrap" aria-labelledby="create-heading">
     <div class="feature-copy">
-      
+
       <h2 id="create-heading">Createから、作成画面へ。</h2>
       <p>作成画面も、キーボードで開けます。</p>
       <p class="key-example"><kbd>c</kbd><span>→</span><kbd>Enter</kbd><span>→</span><kbd>i</kbd><span>→</span><kbd>Enter</kbd></p>
@@ -56,6 +56,6 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
       <li><h3>コマンドパレットで開く</h3><p><code>gh jump</code>を検索してEnter。短く呼び出すなら、コマンドパレットの標準エイリアス設定で<code>gh</code>を登録します。</p></li>
     </ol>
     <StoreBadge />
-    
+
   </section>
 </Layout>
