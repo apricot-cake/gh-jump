@@ -2,7 +2,7 @@
 
 GitHubのリポジトリを選び、トップページ、Issues、Pull requests、Actionsなどへ移動するPowerToys Command Palette拡張です。GitHub CLIでログイン済みの開発者を対象にしています。
 
-[プロダクトページ](https://apricot-cake.com/gh-jump/)で画面と導入手順を確認できます。
+[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)でアプリの紹介とスクリーンショットを確認できます。
 
 ## インストール
 

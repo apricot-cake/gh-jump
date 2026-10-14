@@ -13,7 +13,3 @@ artifacts/
 *.appxbundle
 *.msixupload
 *.appxupload
-
-website/node_modules/
-website/dist/
-website/.astro/

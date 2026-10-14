@@ -178,16 +178,6 @@ Storeで公開され、インストールできることを確認した後、`mi
 
 `extensions/apricot-cake/gh-jump/`に`extension.json`とアイコンを置き、`id`は`apricot-cake.gh-jump`、`title`は`gh jump`、`installSources`は`type: msstore`と実際のStore product IDを指定します。product IDはmanifestのPackage/Identity/Nameとは別の値です。アイコンはPNGまたはJPEG、100KB以下で、PNGの推奨サイズは256×256です。公開先が未確定の間は、仮のproduct IDでPRを送らないでください。[Gallery投稿手順](https://github.com/microsoft/CmdPal-Extensions/blob/main/docs/CONTRIBUTING.md)
 
-## プロダクトページ
+## 公開リンク
 
-`website`にAstroの静的ページを置きます。Node.jsのバージョンは`.node-version`、依存関係は`website/package-lock.json`で固定します。
-
-```powershell
-cd website
-npm ci
-npm run dev
-npm run check
-npm run build
-```
-
-画像は`website/public/screenshots`、採用済みOcticonsは`website/public/icons`に置きます。変更をmainへpushすると、プロダクトページのワークフローが型検査とビルドを行い、GitHub Pagesへ公開します。アプリ本体のStore提出とは別の処理です。
+アプリの紹介は[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)に集約します。website/index.htmlは旧プロダクトページからStoreへの転送、website/privacy/index.htmlはデータとプライバシーの説明です。GitHub Pagesではこの2ページだけを公開します。

@@ -34,17 +34,3 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
-
-  - package-ecosystem: npm
-    directory: /website
-    labels:
-      - 依存更新
-    schedule:
-      interval: weekly
-    groups:
-      website:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
