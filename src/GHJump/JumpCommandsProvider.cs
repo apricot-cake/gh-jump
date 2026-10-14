@@ -12,7 +12,7 @@ public sealed partial class JumpCommandsProvider : CommandProvider, IDisposable
     {
         Id = "apricot-cake.gh-jump";
         DisplayName = "gh jump";
-        Icon = JumpIcons.Get("repo");
+        Icon = JumpIcons.App;
         _commands = [new CommandItem(_repositories) { Title = "gh jump", Subtitle = "Search repositories and open GitHub" }];
     }
 

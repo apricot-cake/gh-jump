@@ -1,0 +1,21 @@
+{
+  "boardId": "4433549a-0a55-456c-8967-3ad3a9285761",
+  "itemId": "gh-jump-pastel-cat-cutout",
+  "generator": "Creative Production / built-in ImageGen",
+  "sourceImage": "exec-4dfd0069-6581-464a-b7fe-bf64e3567063.png",
+  "sourceSha256": "04fbe37fe1dfb5a5cbd69ace17af9e93dae3eda3a52174a73f8a4f7b847adf86",
+  "description": "淡いシアン・青・ラベンダーの猫耳と白い >_。白枠なし、透過背景。",
+  "exports": {
+    "Square150x150Logo": 150,
+    "StoreLogo": 50,
+    "AppIcon": 64,
+    "Square44x44Logo": 44
+  },
+  "scales": [
+    100,
+    125,
+    150,
+    200,
+    400
+  ]
+}

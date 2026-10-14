@@ -25,7 +25,7 @@ internal sealed partial class RepositoriesPage : ListPage, IDisposable
         Id = "gh-jump.repositories";
         Title = "gh jump";
         Name = "Open";
-        Icon = JumpIcons.Get("repo");
+        Icon = JumpIcons.App;
         PlaceholderText = "Search owner/repository";
         _refresh = new RefreshCommand(this);
         EmptyContent = new CommandItem(_refresh) { Title = "Load repositories", Subtitle = "Uses your GitHub CLI account" };

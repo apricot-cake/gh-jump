@@ -13,9 +13,14 @@ const assets = path.resolve(__dirname, '../src/GHJump/Assets');
       await sharp(Buffer.from(svg)).resize(64, 64).png().toFile(path.join(assets, 'Icons', filename.replace('.svg', `-${theme}.png`)));
     }
   }
-  const repo = fs.readFileSync(path.join(assets, 'Octicons/repo.svg'), 'utf8').replace('<svg ', '<svg fill="#ffffff" ');
+  const appIcon = path.resolve(__dirname, '../design/app-icon.png');
   for (const [name, size] of [['StoreLogo', 50], ['Square44x44Logo', 44], ['Square150x150Logo', 150]]) {
-    const icon = await sharp(Buffer.from(repo)).resize(Math.round(size * 0.65), Math.round(size * 0.65)).png().toBuffer();
-    await sharp({ create: { width: size, height: size, channels: 4, background: '#0969da' } }).composite([{ input: icon, gravity: 'centre' }]).png().toFile(path.join(assets, `${name}.png`));
+    for (const scale of [100, 125, 150, 200, 400]) {
+      const pixels = Math.round(size * scale / 100);
+      const suffix = scale === 100 ? '' : `.scale-${scale}`;
+      await sharp(appIcon).resize(pixels, pixels).png().toFile(path.join(assets, `${name}${suffix}.png`));
+    }
   }
+  await sharp(appIcon).resize(64, 64).png().toFile(path.join(assets, 'AppIcon.png'));
+  await sharp(appIcon).resize(300, 300).png().toFile(path.resolve(__dirname, '../store/images/icon.png'));
 })().catch(error => { console.error(error.message); process.exitCode = 1; });
