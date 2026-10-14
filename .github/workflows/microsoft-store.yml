@@ -21,6 +21,7 @@ on:
         options:
           - store/listings.json
           - store/listings.ja-jp.json
+          - store/listings.icons.json
       include_package:
         description: 掲載内容と同じ提出で検証済みパッケージも更新（listingモードのみ）
         type: boolean

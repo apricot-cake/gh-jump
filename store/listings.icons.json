@@ -1,0 +1,20 @@
+{
+  "ja-jp": {
+    "images": [
+      {
+        "fileName": "images/icon.png",
+        "description": "gh jump アプリアイコン",
+        "imageType": "Icon"
+      }
+    ]
+  },
+  "en-us": {
+    "images": [
+      {
+        "fileName": "images/icon.png",
+        "description": "gh jump app icon",
+        "imageType": "Icon"
+      }
+    ]
+  }
+}

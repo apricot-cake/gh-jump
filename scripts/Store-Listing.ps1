@@ -14,7 +14,7 @@ function Get-StoreImageDimensions {
         $format = if ($image.RawFormat.Guid -eq [Drawing.Imaging.ImageFormat]::Png.Guid) { 'PNG' }
             else { throw 'Unsupported image format.' }
         return @{ Width = $image.Width; Height = $image.Height; Format = $format }
-    } catch { throw 'Store screenshots must be valid PNG files.' }
+    } catch { throw 'Store images must be valid PNG files.' }
     finally { if ($null -ne $image) { $image.Dispose() } }
 }
 function Resolve-StoreImagePath {
@@ -59,22 +59,27 @@ function Read-StoreListingInput {
         }
         if ($listing.Contains('images')) {
             if ($listing.images -isnot [array] -or $listing.images.Count -eq 0) { throw 'images must be a nonempty array.' }
-            if ($listing.images.Count -gt 10) { throw 'A listing must have no more than 10 screenshots.' }
+            $screenshotCount = @($listing.images | Where-Object { $_.imageType -ceq 'Screenshot' }).Count
+            $iconCount = @($listing.images | Where-Object { $_.imageType -ceq 'Icon' }).Count
+            if ($screenshotCount -gt 10) { throw 'A listing must have no more than 10 screenshots.' }
+            if ($iconCount -gt 1) { throw 'A listing must have no more than one Icon.' }
             foreach ($image in $listing.images) {
                 if ($image -isnot [Collections.IDictionary] -or $image.Keys.Count -ne 3 -or
                     !$image.Contains('fileName') -or !$image.Contains('description') -or !$image.Contains('imageType')) { throw 'Images require fileName, description and imageType only.' }
                 if ($image.fileName -isnot [string] -or [string]::IsNullOrWhiteSpace($image.fileName) -or
-                    $image.description -isnot [string] -or $image.imageType -cne 'Screenshot') { throw 'Only Screenshot images are supported.' }
-                if ($image.description.Length -gt 200) { throw 'Screenshot descriptions must not exceed 200 characters.' }
+                    $image.description -isnot [string] -or $image.imageType -cnotin @('Screenshot', 'Icon')) { throw 'Only Screenshot and Icon images are supported.' }
+                if ($image.description.Length -gt 200) { throw 'Image descriptions must not exceed 200 characters.' }
                 $archiveName = $image.fileName.Replace('\', '/')
                 if (!$archiveNames.Add($archiveName)) { throw "Duplicate image fileName: $archiveName" }
                 $imagePath = Resolve-StoreImagePath -RootDirectory $rootDirectory -FileName $image.fileName
-                if ((Get-Item -LiteralPath $imagePath).Length -gt 50MB) { throw 'Store screenshots must not exceed 50 MB.' }
+                if ((Get-Item -LiteralPath $imagePath).Length -gt 50MB) { throw 'Store images must not exceed 50 MB.' }
                 $dimensions = Get-StoreImageDimensions -Path $imagePath
-                if (!(($dimensions.Width -ge 1366 -and $dimensions.Height -ge 768) -or
+                if ($image.imageType -ceq 'Icon') {
+                    if ($dimensions.Width -ne 300 -or $dimensions.Height -ne 300) { throw "Icon must be exactly 300 x 300: $archiveName" }
+                } elseif (!(($dimensions.Width -ge 1366 -and $dimensions.Height -ge 768) -or
                     ($dimensions.Width -ge 768 -and $dimensions.Height -ge 1366))) { throw "Screenshot must be at least 1366 x 768 or 768 x 1366: $archiveName" }
                 $extension = [IO.Path]::GetExtension($imagePath).ToLowerInvariant()
-                if ($extension -ne '.png') { throw 'Store screenshots must use the .png extension.' }
+                if ($extension -ne '.png') { throw 'Store images must use the .png extension.' }
             }
         }
     }
@@ -271,7 +276,7 @@ function Invoke-StoreListingUpdate {
     $plan = New-StoreListingPlan -Published $published -Listings $Listings -RootDirectory (Split-Path $ResolvedListingPath -Parent) -Package $packageInput
     $pendingKey = Get-StoreFieldKey -Object $application -Name 'pendingApplicationSubmission'
     $hasPending = $pendingKey -and $application[$pendingKey]
-    Write-Host "Listing plan: locales $($plan.Locales -join ', '); $($plan.ImageCount) screenshots; pending submission $([bool]$hasPending)."
+    Write-Host "Listing plan: locales $($plan.Locales -join ', '); $($plan.ImageCount) images; pending submission $([bool]$hasPending)."
     Write-Host "Package replacement: $($plan.PackageIncluded). Unspecified locales, listing fields and image types are preserved."
     if ($Mode -eq 'listing-verify') {
         Write-Host 'Listing plan verified against the published submission. No Store submission was changed.'

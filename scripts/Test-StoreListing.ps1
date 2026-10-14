@@ -35,6 +35,11 @@ try {
     $oversizeFile = [IO.File]::OpenWrite((Join-Path $fixtureRoot 'images/oversize.png'))
     try { $oversizeFile.SetLength(50MB + 1) } finally { $oversizeFile.Dispose() }
 
+    foreach ($size in @(300, 299, 301)) {
+        $iconFixture = [Drawing.Bitmap]::new($size, 300)
+        try { $iconFixture.Save((Join-Path $fixtureRoot "images/icon-$size.png"), [Drawing.Imaging.ImageFormat]::Png) } finally { $iconFixture.Dispose() }
+    }
+    Copy-Item -LiteralPath (Join-Path $fixtureRoot 'images/icon-300.png') -Destination (Join-Path $fixtureRoot 'images/icon-second.png')
     $published = @{
         applicationPackages = @(@{ fileName = 'existing.msixbundle'; fileStatus = 'Uploaded'; id = 'package-123'; version = '1.0.0.0' })
         pricing = @{ priceId = 'Free'; isAdvancedPricingModel = $false }
@@ -122,6 +127,44 @@ try {
     }
     Assert-True (@($plan.Assets.ArchivePath | Select-Object -Unique).Count -eq 2) 'ZIP references must be unique.'
 
+    $iconOnlyRequested = @{
+        'en-us' = @{ images = @(@{ fileName = 'images/icon-300.png'; imageType = 'Icon'; description = 'gh jump icon' }) }
+        'ja-jp' = @{ images = @(@{ fileName = 'images/icon-300.png'; imageType = 'Icon'; description = 'gh jump アイコン' }) }
+    }
+    $iconPlan = New-StoreListingPlan -Published $published -Listings $iconOnlyRequested -RootDirectory $fixtureRoot
+    Assert-True ($iconPlan.ImageCount -eq 2 -and $iconPlan.Assets.Count -eq 2) 'Shared icons must create one localized upload per listing.'
+    $iconEnglish = $iconPlan.Submission.listings['en-us'].baseListing
+    $preservedShot = @($iconEnglish.images | Where-Object { $_.imageType -eq 'Screenshot' })
+    Assert-True ((ConvertTo-TestJson $preservedShot) -ceq (ConvertTo-TestJson @($published.listings['en-us'].baseListing.images | Where-Object { $_.imageType -eq 'Screenshot' }))) 'Icon-only updates must preserve screenshots exactly.'
+    $oldIcon = @($iconEnglish.images | Where-Object { $_.fileName -eq 'existing-icon.png' })
+    Assert-True ($oldIcon.Count -eq 1 -and $oldIcon[0].fileStatus -eq 'PendingDelete') 'The existing icon must be marked for replacement.'
+    foreach ($locale in @('en-us', 'ja-jp')) {
+        $iconUpload = @($iconPlan.Submission.listings[$locale].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
+        Assert-True ($iconUpload.Count -eq 1 -and $iconUpload[0].imageType -ceq 'Icon' -and $iconUpload[0].fileName -ceq "$locale/images/icon-300.png") 'Each icon upload must use its localized archive reference.'
+        Assert-True ($iconPlan.Submission.listings[$locale].baseListing.title -ceq $published.listings[$locale].baseListing.title -and $iconPlan.Submission.listings[$locale].baseListing.description -ceq $published.listings[$locale].baseListing.description) 'Icon-only updates must preserve listing titles and descriptions.'
+    }
+    $bothExistingIcons = ConvertTo-TestJson $published | ConvertFrom-Json -AsHashtable
+    $bothExistingIcons.listings['ja-jp'].baseListing.images = @(
+        @{ fileName = 'ja-existing-shot.png'; fileStatus = 'Uploaded'; imageType = 'Screenshot'; description = '既存画像' },
+        @{ fileName = 'ja-existing-icon.png'; fileStatus = 'Uploaded'; imageType = 'Icon'; description = '既存アイコン' }
+    )
+    $committedIcons = Read-StoreListingInput -Path (Join-Path $repositoryRoot 'store/listings.icons.json')
+    $bothIconPlan = New-StoreListingPlan -Published $bothExistingIcons -Listings $committedIcons -RootDirectory (Join-Path $repositoryRoot 'store')
+    Assert-True ($bothIconPlan.ImageCount -eq 2 -and $bothIconPlan.Assets.Count -eq 2) 'The committed icon listing must create exactly two localized icon uploads.'
+    foreach ($locale in @('en-us', 'ja-jp')) {
+        $after = $bothIconPlan.Submission.listings[$locale].baseListing
+        $before = $bothExistingIcons.listings[$locale].baseListing
+        $oldIcon = @($after.images | Where-Object { $_.imageType -eq 'Icon' -and $_.fileStatus -eq 'PendingDelete' })
+        $newIcon = @($after.images | Where-Object { $_.imageType -eq 'Icon' -and $_.fileStatus -eq 'PendingUpload' })
+        Assert-True ($oldIcon.Count -eq 1 -and $newIcon.Count -eq 1 -and $newIcon[0].fileName -ceq "$locale/images/icon.png") 'Existing Store logos in both locales must be replaced once.'
+        Assert-True ((ConvertTo-TestJson @($after.images | Where-Object { $_.imageType -eq 'Screenshot' })) -ceq (ConvertTo-TestJson @($before.images | Where-Object { $_.imageType -eq 'Screenshot' }))) 'The committed icon listing must preserve screenshots in both locales.'
+        foreach ($field in @($before.Keys | Where-Object { $_ -ne 'images' })) {
+            Assert-True ((ConvertTo-TestJson $after[$field]) -ceq (ConvertTo-TestJson $before[$field])) 'The committed icon listing must preserve every unspecified text field.'
+        }
+    }
+    $mixedRequested = @{ 'en-us' = @{ images = @($requested['en-us'].images) + @($iconOnlyRequested['en-us'].images) } }
+    $mixedPlan = New-StoreListingPlan -Published $published -Listings $mixedRequested -RootDirectory $fixtureRoot
+    Assert-True ($mixedPlan.ImageCount -eq 3 -and @($mixedPlan.Submission.listings['en-us'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingDelete' }).Count -eq 2) 'Mixed image updates must replace both requested types in the same plan.'
     $textOnly = New-StoreListingPlan -Published $published -Listings @{ 'en-us' = @{ description = 'Text only' } } -RootDirectory $fixtureRoot
     Assert-True ((ConvertTo-TestJson $textOnly.Submission.listings['en-us'].baseListing.images) -ceq (ConvertTo-TestJson $published.listings['en-us'].baseListing.images)) 'Text-only updates must preserve every image.'
     Assert-True (@($textOnly.Assets).Count -eq 0 -and $textOnly.ImageCount -eq 0) 'Text-only updates must not create image uploads.'
@@ -227,6 +270,16 @@ try {
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/corrupt.png'; imageType = 'Screenshot'; description = 'Corrupt' }) } } 'Truncated PNG bytes must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/oversize.png'; imageType = 'Screenshot'; description = 'Oversize' }) } } 'Screenshots over 50 MB must be rejected.'
     Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/actions.png'; imageType = 'Screenshot'; description = ('x' * 201) }) } } 'Screenshot captions over 200 characters must be rejected.'
+    foreach ($badIconSize in @(299, 301)) {
+        Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = "images/icon-$badIconSize.png"; imageType = 'Icon'; description = 'Wrong icon size' }) } } 'Icons must be exactly 300 x 300 pixels.'
+    }
+    Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/icon-300.png'; imageType = 'Icon'; description = 'First' }, @{ fileName = 'images/icon-second.png'; imageType = 'Icon'; description = 'Second' }) } } 'Two icons in the same locale must be rejected.'
+    Test-InvalidInput @{ 'en-us' = @{ images = @(@{ fileName = 'images/corrupt.png'; imageType = 'Icon'; description = 'Corrupt' }) } } 'Corrupt icon files must be rejected.'
+    [IO.File]::WriteAllText($inputPath, (ConvertTo-TestJson $iconOnlyRequested))
+    $iconInput = Read-StoreListingInput -Path $inputPath
+    Assert-True ($iconInput.Count -eq 2) 'A valid 300 x 300 icon must be accepted for each existing locale.'
+    $newIconLocale = @{ 'fr-fr' = @{ title = 'gh jump'; description = 'Description'; images = @($iconOnlyRequested['en-us'].images) } }
+    Test-InvalidInput $newIconLocale 'Icons alone must not bypass screenshot requirements for a new locale.'
     $tooManyImages = @(1..11 | ForEach-Object {
         $name = "images/shot-$_.png"
         Copy-Item -LiteralPath (Join-Path $fixtureRoot 'images/actions.png') -Destination (Join-Path $fixtureRoot $name)
@@ -242,6 +295,9 @@ try {
     $portraitInput = Read-StoreListingInput -Path $inputPath
     Assert-True ($portraitInput['en-us'].images.Count -eq 1) 'Portrait 768 x 1366 screenshots must be accepted.'
 
+    [IO.File]::WriteAllText($inputPath, (ConvertTo-TestJson @{ 'en-us' = @{ images = $tenImages + @($iconOnlyRequested['en-us'].images) } }))
+    $tenPlusIconInput = Read-StoreListingInput -Path $inputPath
+    Assert-True ($tenPlusIconInput['en-us'].images.Count -eq 11) 'Ten screenshots plus one icon must be accepted because limits apply per image type.'
     Assert-Rejected { Get-StoreImageDimensions -Path (Join-Path $fixtureRoot 'listings.json') } 'Non-image bytes must be rejected by image decoding.'
 
     $repositoryListings = Read-StoreListingInput -Path (Join-Path $repositoryRoot 'store/listings.json')
@@ -316,15 +372,22 @@ try {
                     Assert-True ($archive.Entries.Count -eq $expectedCount -and $null -ne $archive.GetEntry('GHJump_1.0.1.0_Bundle.msixbundle')) 'The actual uploaded ZIP must include the bundle in combined submissions.'
                 } finally { $archive.Dispose() }
             }
+            if ($script:offlineScenario -eq 'success-icons') {
+                $archive = [IO.Compression.ZipFile]::OpenRead($Path)
+                try {
+                    Assert-True ($archive.Entries.Count -eq 2 -and $null -ne $archive.GetEntry('en-us/images/icon-300.png') -and $null -ne $archive.GetEntry('ja-jp/images/icon-300.png')) 'The icon-only upload ZIP must contain exactly the two localized icons.'
+                } finally { $archive.Dispose() }
+            }
             if ($script:offlineScenario -eq 'upload-failed') { throw 'Offline upload failure.' }
         }
-        foreach ($scenario in @('verify', 'verify-pending', 'verify-combined', 'invalid-package-version', 'missing-package', 'pending', 'pending-race', 'success', 'success-combined', 'success-package-text-only', 'success-text-only', 'success-new-locale', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
+        foreach ($scenario in @('verify', 'verify-pending', 'verify-combined', 'invalid-package-version', 'missing-package', 'pending', 'pending-race', 'success', 'success-combined', 'success-package-text-only', 'success-text-only', 'success-new-locale', 'success-icons', 'upload-failed', 'commit-failed', 'unknown-status', 'pending-commit')) {
             $script:offlineScenario = $scenario
             $script:offlineApplicationReads = 0
             $script:offlineCalls = [Collections.Generic.List[object]]::new()
             $mode = if ($scenario -like 'verify*') { 'listing-verify' } else { 'listing-submit' }
             $testListings = if ($scenario -in @('success-text-only', 'success-package-text-only')) { @{ 'en-us' = @{ description = 'Text only' } } }
-                elseif ($scenario -eq 'success-new-locale') { $newJapanese } else { $requested }
+                elseif ($scenario -eq 'success-new-locale') { $newJapanese }
+                elseif ($scenario -eq 'success-icons') { $iconOnlyRequested } else { $requested }
             $packageOptions = @{}
             if ($scenario -in @('verify-combined', 'success-combined', 'success-package-text-only', 'invalid-package-version', 'missing-package')) {
                 $packageOptions = @{ PackagePath = $bundlePath; PackageVersion = ([version]'1.0.1.0') }
@@ -357,7 +420,10 @@ try {
             $newImages = @($put.Body.listings['en-us'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
             if ($scenario -in @('success-text-only', 'success-package-text-only')) {
                 Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us'].baseListing.images) -ceq (ConvertTo-TestJson $published.listings['en-us'].baseListing.images)) 'Text-only API updates must preserve every image without uploading an archive.'
-            } elseif ($scenario -eq 'success-new-locale') {
+            } elseif ($scenario -eq 'success-icons') {
+                Assert-True ($newImages.Count -eq 1 -and $newImages[0].imageType -ceq 'Icon') 'The icon-only API PUT must upload only the requested icon.'
+                $iconPutShots = @($put.Body.listings['en-us'].baseListing.images | Where-Object { $_.imageType -eq 'Screenshot' })
+                Assert-True ((ConvertTo-TestJson $iconPutShots) -ceq (ConvertTo-TestJson @($published.listings['en-us'].baseListing.images | Where-Object { $_.imageType -eq 'Screenshot' }))) 'The icon-only API PUT must preserve published screenshots.'            } elseif ($scenario -eq 'success-new-locale') {
                 Assert-True ((ConvertTo-TestJson $put.Body.listings['en-us']) -ceq (ConvertTo-TestJson $englishOnly.listings['en-us'])) 'Adding Japanese through the API must leave every English listing field and image unchanged.'
                 $japaneseUploads = @($put.Body.listings['ja-jp'].baseListing.images | Where-Object { $_.fileStatus -eq 'PendingUpload' })
                 Assert-True ($japaneseUploads.Count -eq 1 -and $japaneseUploads[0].fileName -ceq 'ja-jp/images/repositories.png') 'The new Japanese API listing must use the uploaded localized archive reference.'
