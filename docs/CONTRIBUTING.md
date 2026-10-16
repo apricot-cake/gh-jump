@@ -180,4 +180,4 @@ Storeで公開され、インストールできることを確認した後、`mi
 
 ## 公開リンク
 
-アプリの紹介は[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)に集約します。website/index.htmlは旧公式サイトからStoreへの転送、website/privacy/index.htmlはデータとプライバシーの説明です。GitHub Pagesではこの2ページだけを公開します。
+アプリの紹介は[Microsoft Store](https://apps.microsoft.com/detail/9NN7GSPR8W9R)に集約します。プライバシーポリシーはリポジトリ直下の[PRIVACY.md](../PRIVACY.md)で公開します。StoreのプライバシーポリシーURLには`https://github.com/apricot-cake/gh-jump/blob/main/PRIVACY.md`を指定します。

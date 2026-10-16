@@ -18,6 +18,8 @@ Command Paletteでgh jumpを開き、リポジトリを検索してEnterで選�
 
 認証、操作例、アクション一覧、制限事項は[使い方](docs/使い方.md)を参照してください。
 
+データの取り扱いは[プライバシーポリシー](PRIVACY.md)を参照してください。
+
 リポジトリ一覧。一部のリポジトリ名を隠しています。
 
 ![リポジトリ一覧](docs/images/repositories.png)
