@@ -1,8 +1,8 @@
 {
   "ja-jp": {
     "title": "gh jump",
-    "shortDescription": "PowerToysのCommand PaletteからGitHubのリポジトリを検索し、目的のページをキーボードで開けます。",
-    "description": "PowerToysのCommand Paletteから、GitHubのリポジトリへすばやく移動できます。\n\nGitHub CLIでアクセスできるリポジトリを、リポジトリ名、ユーザー・組織名、owner/repositoryで検索できます。\n\nEnterでリポジトリを選び、何も入力せずにもう一度Enterを押すと、リポジトリのトップページを開きます。Issues、Pull requests、Actions、Releases、Security、Settingsへも移動できます。\n\nWindows 11、Command Paletteを有効にしたMicrosoft PowerToys、ログイン済みのGitHub CLIが必要です。GitHub.comに対応し、private・organization・forkのリポジトリも、ログインしたアカウントに権限がある場合に表示します。開いたページでは、ブラウザー側のGitHubログインを使用します。\n\n拡張本体のアクション名などは英語です。gh jumpは独立したオープンソースの拡張機能で、GitHubやMicrosoftの公式製品ではありません。",
+    "shortDescription": "PowerToysのコマンドパレットからGitHubのリポジトリを検索し、目的のページをキーボードで開けます。",
+    "description": "PowerToysのコマンドパレットから、GitHubのリポジトリへすばやく移動できます。\n\nGitHub CLIでアクセスできるリポジトリを、リポジトリ名、ユーザー・組織名、owner/repositoryで検索できます。\n\nEnterでリポジトリを選び、何も入力せずにもう一度Enterを押すと、リポジトリのトップページを開きます。Issues、Pull requests、Actions、Releases、Security、Settingsへも移動できます。\n\nWindows 11、コマンドパレットを有効にしたMicrosoft PowerToys、ログイン済みのGitHub CLIが必要です。GitHub.comに対応し、private・organization・forkのリポジトリも、ログインしたアカウントに権限がある場合に表示します。開いたページでは、ブラウザー側のGitHubログインを使用します。\n\n拡張本体のアクション名などは英語です。gh jumpは独立したオープンソースの拡張機能で、GitHubやMicrosoftの公式製品ではありません。",
     "features": [
       "取得済みのリポジトリ一覧をローカルで高速検索",
       "リポジトリ名・ユーザー名・組織名・owner/repositoryで絞り込み",
@@ -12,7 +12,7 @@
     "images": [
       {
         "fileName": "images/repositories.png",
-        "description": "Command PaletteからアクセスできるGitHubリポジトリを検索します。",
+        "description": "コマンドパレットからアクセスできるGitHubリポジトリを検索します。",
         "imageType": "Screenshot"
       },
       {

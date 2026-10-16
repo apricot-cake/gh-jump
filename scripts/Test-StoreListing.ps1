@@ -175,7 +175,7 @@ try {
     $newJapanese = @{
         'ja-jp' = @{
             title = 'GH Jump'; description = 'GitHubのリポジトリを検索して開きます。'
-            shortDescription = 'Command PaletteからGitHubへ移動。'
+            shortDescription = 'コマンドパレットからGitHubへ移動。'
             features = @('取得済みのリポジトリを高速検索')
             images = @(@{ fileName = 'images/repositories.png'; imageType = 'Screenshot'; description = 'リポジトリ一覧' })
         }

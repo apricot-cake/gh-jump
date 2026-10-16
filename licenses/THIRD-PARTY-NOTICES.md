@@ -17,7 +17,7 @@ gh jump の独自コードには、パッケージのルートにある `LICENSE
 
 ## 原文の取得元
 
-- Command Palette: NuGet パッケージの MIT 表記と [PowerToys の LICENSE](https://github.com/microsoft/PowerToys/blob/main/LICENSE)。
+- コマンドパレット: NuGet パッケージの MIT 表記と [PowerToys の LICENSE](https://github.com/microsoft/PowerToys/blob/main/LICENSE)。
 - CsWinRT、WinRTServer、ToolGood.Words.Pinyin、.NET Runtime: 各バージョンの NuGet パッケージに含まれる `LICENSE` と `THIRD-PARTY-NOTICES.TXT`。ランタイムの第三者通知は省略せず同梱しています。
 - Windows SDK: NuGet パッケージの `licenseUrl` が指定する [Microsoft のライセンス原文](https://aka.ms/WinSDKLicenseURL)。RTF の原文を変更せず同梱しています。
 - Octicons: [公式リポジトリのコミット 923a31b34542702800cb90a0fd390e2e60dd92ac](https://github.com/primer/octicons/tree/923a31b34542702800cb90a0fd390e2e60dd92ac)。元の文書は `Assets/Octicons/LICENSE` にも含まれています。
